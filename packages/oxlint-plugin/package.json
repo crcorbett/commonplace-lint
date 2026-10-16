@@ -1,0 +1,79 @@
+{
+  "name": "@commonplace/oxlint-plugin",
+  "version": "0.1.0",
+  "description": "Shared Oxlint rules for strict Effect TypeScript, Alchemy and repository code.",
+  "license": "MIT",
+  "author": "Cooper Corbett",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crcorbett/commonplace-lint.git",
+    "directory": "packages/oxlint-plugin"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./strict-effect": {
+      "types": "./dist/strict-effect.d.ts",
+      "default": "./dist/strict-effect.js"
+    },
+    "./effect": {
+      "types": "./dist/effect.d.ts",
+      "default": "./dist/effect.js"
+    },
+    "./alchemy": {
+      "types": "./dist/alchemy.d.ts",
+      "default": "./dist/alchemy.js"
+    },
+    "./bun": {
+      "types": "./dist/bun.d.ts",
+      "default": "./dist/bun.js"
+    },
+    "./package": {
+      "types": "./dist/package.d.ts",
+      "default": "./dist/package.js"
+    },
+    "./anti-slop": {
+      "types": "./dist/anti-slop/index.d.ts",
+      "default": "./dist/anti-slop/index.js"
+    },
+    "./anti-slop-effect": {
+      "types": "./dist/anti-slop/effect/index.d.ts",
+      "default": "./dist/anti-slop/effect/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf ./dist && tsc --build tsconfig.build.json --force",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --root ../.. --project lint-package",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "1.80.0",
+    "effect": "4.0.2"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "4.0.2",
+    "@effect/vitest": "4.0.2",
+    "@types/bun": "1.4.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
+  },
+  "peerDependencies": {
+    "oxlint": "1.80.0 || 1.85.0"
+  },
+  "engines": {
+    "node": ">=22.14.0"
+  }
+}
