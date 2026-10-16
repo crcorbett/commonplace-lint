@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "packages/oxlint-plugin": {
+      "entry": [
+        "src/index.ts!",
+        "src/strict-effect.ts!",
+        "src/effect.ts!",
+        "src/alchemy.ts!",
+        "src/bun.ts!",
+        "src/package.ts!",
+        "src/anti-slop/index.ts!",
+        "src/anti-slop/effect/index.ts!",
+        "test/**/*.test.ts"
+      ]
+    }
+  },
+  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"]
+}

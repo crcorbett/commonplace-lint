@@ -1,0 +1,33 @@
+{
+  "router": "docs/README.md",
+  "documents": [
+    {
+      "path": "README.md",
+      "owner": "installation and contribution"
+    },
+    {
+      "path": "AGENTS.md",
+      "owner": "contributor rules"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "owner": "repository boundaries"
+    },
+    {
+      "path": "packages/oxlint-plugin/README.md",
+      "owner": "rules exports and options"
+    },
+    {
+      "path": "docs/README.md",
+      "owner": "documentation router"
+    },
+    {
+      "path": "docs/runbooks/release.md",
+      "owner": "release procedure"
+    },
+    {
+      "path": ".changeset/README.md",
+      "owner": "version notes"
+    }
+  ]
+}

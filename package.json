@@ -1,0 +1,68 @@
+{
+  "name": "@commonplace/lint-repository",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "catalog": {
+      "@effect/platform-node": "4.0.2",
+      "@effect/tsgo": "0.38.0",
+      "@effect/vitest": "4.0.2",
+      "@changesets/cli": "3.0.1",
+      "@types/bun": "1.4.0",
+      "effect": "4.0.2",
+      "knip": "6.32.2",
+      "oxfmt": "0.65.0",
+      "oxlint": "1.80.0",
+      "oxlint-tsgolint": "7.0.2001",
+      "turbo": "2.10.11",
+      "typescript": "7.0.2",
+      "vitest": "5.0.1"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "prepare": "effect-tsgo patch --oxlint && bun run build:lint-plugin",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "build:lint-plugin": "bun run --cwd packages/oxlint-plugin build",
+    "build": "turbo run build",
+    "lint": "bun run build:lint-plugin && oxlint --deny-warnings .",
+    "test:lint-rules": "bun run build:lint-plugin && vitest run --project lint-rules",
+    "test": "bun run build:lint-plugin && vitest run",
+    "check-types": "tsc -p tsconfig.tools.json --noEmit && turbo run check-types",
+    "knip": "knip",
+    "knip:production": "knip --production --config knip.production.json",
+    "repository:check": "python3 tools/check_repository.py",
+    "verification": "bun run format:check && bun run lint && bun run knip && bun run knip:production && bun run check-types && bun run build && bun run repository:check",
+    "pack": "bun run build:lint-plugin && mkdir -p dist/npm && npm pack ./packages/oxlint-plugin --ignore-scripts --pack-destination dist/npm",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "test:lint-package": "bun run build:lint-plugin && vitest run --project lint-package"
+  },
+  "devDependencies": {
+    "@changesets/cli": "catalog:",
+    "@commonplace/oxlint-plugin": "workspace:*",
+    "@effect/platform-node": "catalog:",
+    "@effect/tsgo": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@types/bun": "catalog:",
+    "effect": "catalog:",
+    "knip": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "overrides": {
+    "@effect/platform-node-shared": "4.0.2"
+  },
+  "engines": {
+    "bun": "1.4.0"
+  },
+  "packageManager": "bun@1.4.0"
+}

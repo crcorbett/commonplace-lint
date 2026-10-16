@@ -1,0 +1,66 @@
+name: Publish Oxlint package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version to publish
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-oxlint-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.0
+      - name: Install npm with trusted publishing support
+        run: npm install --global npm@11.13.0
+      - name: Check requested version
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          actual_version=$(jq -r .version packages/oxlint-plugin/package.json)
+          test "$actual_version" = "$EXPECTED_VERSION"
+          test "$(jq -r .name packages/oxlint-plugin/package.json)" = '@commonplace/oxlint-plugin'
+      - name: Install pinned dependencies
+        run: bun install --frozen-lockfile
+      - name: Test and verify
+        run: |
+          bun run test
+          bun run verification
+      - name: Pack the checked package
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm-release"
+          npm pack ./packages/oxlint-plugin --ignore-scripts --json --pack-destination "$RUNNER_TEMP/npm-release" > "$RUNNER_TEMP/npm-release/pack.json"
+      - name: Publish through npm trusted publishing
+        run: |
+          archive=$(jq -r '.[0].filename' "$RUNNER_TEMP/npm-release/pack.json")
+          npm publish "$RUNNER_TEMP/npm-release/$archive" --access public --ignore-scripts
+      - name: Check published version and archive checksum
+        run: |
+          version=$(jq -r .version packages/oxlint-plugin/package.json)
+          expected_integrity=$(jq -r '.[0].integrity' "$RUNNER_TEMP/npm-release/pack.json")
+          actual_integrity=$(npm view "@commonplace/oxlint-plugin@$version" dist.integrity)
+          test "$actual_integrity" = "$expected_integrity"
+          npm view "@commonplace/oxlint-plugin@$version" name version dist.tarball
