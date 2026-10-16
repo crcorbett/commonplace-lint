@@ -28,6 +28,10 @@
     {
       "path": ".changeset/README.md",
       "owner": "version notes"
+    },
+    {
+      "path": "docs/evidence/2026-10-16-first-release.md",
+      "owner": "dated first GitHub release evidence"
     }
   ]
 }
