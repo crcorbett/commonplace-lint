@@ -14,3 +14,5 @@ checked at a particular commit; they do not replace the current runbook.
 - [First npm publication evidence](evidence/2026-10-17-npm-release.md) — 17 October 2026.
 
 - [GitHub trusted publishing evidence](evidence/2026-10-17-trusted-publishing.md) — 17 October 2026.
+
+- [Prevention rule qualification](evidence/2026-10-17-prevention-rules.md) — 17 October 2026, including pending publication checks.
