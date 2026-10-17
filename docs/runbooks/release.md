@@ -1,8 +1,7 @@
 # Release Commonplace Lint
 
-The npm account `crcorbett` owns the `commonplaces` organisation, checked on
-17 October 2026. The package is now `@commonplaces/oxlint-plugin`; the original
-GitHub v0.1.0 archive retains its old name. npm publication still needs explicit
+Publish `@commonplaces/oxlint-plugin` from this repository. The original
+GitHub v0.1.0 archive retains its old name. npm publication needs explicit
 authority and a checked archive. Do not describe a GitHub release as npm publication.
 
 ## GitHub release from a workstation
@@ -59,11 +58,20 @@ before retrying. Resume only from the last confirmed step.
    npm view @commonplaces/oxlint-plugin@0.1.1 name version dist.integrity
    ```
 
+If npm reports that the upload is being processed, wait for the version to
+appear before checking its integrity. Do not publish it again. The GitHub
+workflow waits for up to ten minutes; on timeout, inspect registry status
+before retrying any publication.
+
 4. Install that exact registry version in a fresh consumer and run its lint
    configuration. Compare the registry integrity with the checked archive.
-5. In npm package settings, configure a GitHub Actions trusted publisher for
+5. Just before the first release from GitHub Actions, configure a trusted
+   publisher in npm package settings for
    owner `crcorbett`, repository `commonplace-lint`, workflow
    `npm-release.yml`. Allow direct `npm publish`; no environment is configured.
+   Configure it when ready to publish from that workflow: npm expires an
+   unvalidated configuration after two days. The first successful workflow
+   publication validates it. A local publication does not prove this path.
    Use npm's [trusted publisher instructions](https://docs.npmjs.com/trusted-publishers/).
 6. For later authorised npm releases, manually run **Publish Oxlint package**
    on `main` with the exact manifest version. It uses Node 24, npm 11.13.0,
