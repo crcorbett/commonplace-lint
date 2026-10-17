@@ -9,7 +9,7 @@ assert manifest["private"] is True
 assert manifest["workspaces"]["packages"] == ["packages/*"]
 assert sorted(path.name for path in (root / "packages").iterdir()) == ["oxlint-plugin"]
 package = json.loads((root / "packages/oxlint-plugin/package.json").read_text())
-assert package["name"] == "@commonplace/oxlint-plugin"
+assert package["name"] == "@commonplaces/oxlint-plugin"
 assert package["license"] == "MIT"
 assert package["repository"]["url"] == "git+https://github.com/crcorbett/commonplace-lint.git"
 for export in package["exports"].values():

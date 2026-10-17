@@ -42,7 +42,7 @@ jobs:
         run: |
           actual_version=$(jq -r .version packages/oxlint-plugin/package.json)
           test "$actual_version" = "$EXPECTED_VERSION"
-          test "$(jq -r .name packages/oxlint-plugin/package.json)" = '@commonplace/oxlint-plugin'
+          test "$(jq -r .name packages/oxlint-plugin/package.json)" = '@commonplaces/oxlint-plugin'
       - name: Install pinned dependencies
         run: bun install --frozen-lockfile
       - name: Test and verify
@@ -61,6 +61,6 @@ jobs:
         run: |
           version=$(jq -r .version packages/oxlint-plugin/package.json)
           expected_integrity=$(jq -r '.[0].integrity' "$RUNNER_TEMP/npm-release/pack.json")
-          actual_integrity=$(npm view "@commonplace/oxlint-plugin@$version" dist.integrity)
+          actual_integrity=$(npm view "@commonplaces/oxlint-plugin@$version" dist.integrity)
           test "$actual_integrity" = "$expected_integrity"
-          npm view "@commonplace/oxlint-plugin@$version" name version dist.tarball
+          npm view "@commonplaces/oxlint-plugin@$version" name version dist.tarball
