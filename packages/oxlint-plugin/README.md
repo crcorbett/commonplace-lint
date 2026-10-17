@@ -8,15 +8,15 @@ All three exact versions are checked with independently installed archives. ESLi
 
 ## Install
 
-Install the checked GitHub release archive:
+Install the latest npm release and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact https://github.com/crcorbett/commonplace-lint/releases/download/v0.3.0/commonplaces-oxlint-plugin-0.3.0.tgz oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
 ```
 
-The npm registry currently provides `@commonplaces/oxlint-plugin@0.1.2` (57 rules).
-The 0.3.0 additions below require the GitHub archive until a separate npm release
-is published. GitHub archive publication does not publish a registry version.
+The manifest and lockfile retain the resolved version. Historical GitHub release
+archives remain separate distribution artefacts; a GitHub release does not publish
+an npm version.
 
 Create `oxlint.config.ts`:
 

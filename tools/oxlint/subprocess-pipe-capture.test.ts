@@ -80,7 +80,25 @@ const handle = yield* spawner.spawn(command);
 ${body}
 });`;
 
+const conditionalArguments = (body: string) =>
+  program(body)
+    .replace(
+      "const handle =",
+      `const arguments_ = source ? [\`--conditions=\${sourceCondition}\`, "-e", probeScript] : ["-e", probeScript];
+const handle =`,
+    )
+    .replace(
+      "spawner.spawn(command)",
+      'spawner.spawn(ChildProcess.make("bun", arguments_, { stderr: "inherit", stdout: "pipe" }))',
+    );
+
 const rejected = [
+  {
+    name: "conditional argument lists still reject exit before a piped stdout drain",
+    source: conditionalArguments(`yield* handle.exitCode;
+yield* handle.stdout.pipe(Stream.decodeText, Stream.runFold(() => "", (text, chunk) => text + chunk));`),
+    reports: 1,
+  },
   {
     name: "mkString drains remain concurrent with exit",
     source: program(`return yield* Effect.all({ exitCode: handle.exitCode,
@@ -160,6 +178,9 @@ return yield* Effect.all([Stream.runCollect(handle.stdout), Stream.runCollect(ha
   },
 ];
 const accepted = [
+  conditionalArguments(`const output = yield* handle.stdout.pipe(Stream.decodeText, Stream.runFold(() => "", (text, chunk) => text + chunk));
+const exitCode = yield* handle.exitCode;
+return { output, exitCode };`),
   program(
     `const wait = yield* handle.exitCode.pipe(Effect.succeed); yield* Effect.all([Stream.runCollect(handle.stdout), Stream.runCollect(handle.stderr)], { concurrency: 2 }); return yield* wait;`,
   ),

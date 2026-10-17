@@ -83,15 +83,13 @@ export const nonPipe = (context: Context, handle: ESTree.Node, channel: Channel)
         !operation(context, node.callee, "effect/process/ChildProcess", "make")
       )
         return Option.none();
+      // A known options object retains the native two-argument form. Otherwise
+      // the three-argument overload supplies options without requiring a literal
+      // argument list: readonly arrays can also come from aliases or conditions.
       return Array.get(node.arguments, 1).pipe(
         Option.flatMap((second) => valueOf(context, second)),
-        Option.flatMap((second) =>
-          second.type === "ObjectExpression"
-            ? Option.some(second)
-            : second.type === "ArrayExpression"
-              ? Array.get(node.arguments, 2)
-              : Option.none(),
-        ),
+        Option.filter((second) => second.type === "ObjectExpression"),
+        Option.orElse(() => Array.get(node.arguments, 2)),
       );
     }),
   );

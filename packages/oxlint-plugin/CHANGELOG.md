@@ -1,5 +1,11 @@
 # @commonplaces/oxlint-plugin
 
+## 0.3.1
+
+### Patch Changes
+
+- Honour explicit native subprocess options when command arguments are conditional, preserving detection of exit waits before captured stdout drains. Correct the packaged npm installation instructions.
+
 ## 0.3.0
 
 ### Minor Changes
