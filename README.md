@@ -6,15 +6,17 @@
 
 ## Install
 
-Install the current published npm version (61 rules):
+Install the latest published npm version and save the exact resolved version
+(61 rules in the current release):
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.3.0 oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
 ```
 
-Version 0.3.0 is available from npm. See [the npm publication record](docs/evidence/2026-10-17-npm-030.md)
-for its source, archive identity and checks. Its separate GitHub release archive
-upload remains pending; npm installation does not depend on that upload.
+The qualified npm `latest` is 0.3.1. See [the publication record](docs/evidence/2026-10-17-npm-031.md)
+for its source, canonical archive and independent checks. The published GitHub
+release links that verified npm archive; no binary archive is attached to the
+GitHub release. npm installation does not depend on a GitHub mirror.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
