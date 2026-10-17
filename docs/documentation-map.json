@@ -44,6 +44,10 @@
     {
       "path": "docs/evidence/2026-10-17-prevention-rules.md",
       "owner": "dated prevention rule qualification and publication status"
+    },
+    {
+      "path": "docs/evidence/2026-10-17-npm-030.md",
+      "owner": "dated npm 0.3.0 publication, archive mode comparison and independent registry qualification"
     }
   ]
 }

@@ -15,4 +15,6 @@ checked at a particular commit; they do not replace the current runbook.
 
 - [GitHub trusted publishing evidence](evidence/2026-10-17-trusted-publishing.md) — 17 October 2026.
 
-- [Prevention rule qualification](evidence/2026-10-17-prevention-rules.md) — 17 October 2026, including pending publication checks.
+- [Prevention rule qualification](evidence/2026-10-17-prevention-rules.md) — 17 October 2026, preserving the initial pending-publication snapshot.
+
+- [npm 0.3.0 publication](evidence/2026-10-17-npm-030.md) — 17 October 2026, with the distinct registry archive and separate GitHub asset status.
