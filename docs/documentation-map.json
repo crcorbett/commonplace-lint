@@ -36,6 +36,10 @@
     {
       "path": "docs/evidence/2026-10-17-npm-release.md",
       "owner": "dated first npm publication evidence"
+    },
+    {
+      "path": "docs/evidence/2026-10-17-trusted-publishing.md",
+      "owner": "dated GitHub trusted publishing evidence"
     }
   ]
 }
