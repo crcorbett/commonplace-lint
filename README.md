@@ -6,15 +6,18 @@
 
 ## Install
 
-Install the checked GitHub release archive:
+Install the current published npm version (57 rules):
 
 ```sh
-npm install --save-dev --save-exact https://github.com/crcorbett/commonplace-lint/releases/download/v0.3.0/commonplaces-oxlint-plugin-0.3.0.tgz oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.2 oxlint@1.80.0
 ```
 
-The npm registry currently provides `@commonplaces/oxlint-plugin@0.1.2` (57 rules).
-The 0.3.0 additions below require the GitHub archive until a separate npm release
-is published. GitHub archive publication does not publish a registry version.
+Version 0.3.0 contains the 61 rules described in this source tree. Its checked
+tag and local archive are ready; release asset upload and npm publication are
+pending. The new rules are not yet available through the installation command
+above. See [the qualification record](docs/evidence/2026-10-17-prevention-rules.md)
+for the checks and publication status. GitHub archive publication does not
+publish a registry version.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
