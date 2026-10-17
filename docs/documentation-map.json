@@ -48,6 +48,10 @@
     {
       "path": "docs/evidence/2026-10-17-npm-030.md",
       "owner": "dated npm 0.3.0 publication, archive mode comparison and independent registry qualification"
+    },
+    {
+      "path": "docs/evidence/2026-10-17-npm-031.md",
+      "owner": "dated npm 0.3.1 canonical archive, propagation, independent proof and GitHub release status"
     }
   ]
 }

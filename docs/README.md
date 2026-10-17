@@ -18,3 +18,5 @@ checked at a particular commit; they do not replace the current runbook.
 - [Prevention rule qualification](evidence/2026-10-17-prevention-rules.md) — 17 October 2026, preserving the initial pending-publication snapshot.
 
 - [npm 0.3.0 publication](evidence/2026-10-17-npm-030.md) — 17 October 2026, with the distinct registry archive and separate GitHub asset status.
+
+- [npm 0.3.1 and GitHub release](evidence/2026-10-17-npm-031.md) — 17 October 2026, with canonical archive equality, propagation history and a published release linking npm without an attached binary mirror.
