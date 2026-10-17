@@ -80,3 +80,24 @@ before retrying any publication.
 Alchemy uses the same general release pattern: GitHub Actions runs the package
 manager. See its [release workflow](https://github.com/alchemy-run/alchemy/blob/9e3c0584342d67b24a4215f931047aabd230327b/.github/workflows/release.yml).
 This repository has no Alchemy stack because the release needs no infrastructure.
+
+## Verify a release through GitHub
+
+After the reviewed version change reaches `main`, record its exact commit and
+run the existing workflow with the manifest version:
+
+```sh
+gh workflow run npm-release.yml --repo crcorbett/commonplace-lint --ref main -f version=0.1.2
+```
+
+Inspect the run's commit, job steps and publishing output. A successful local
+publication cannot verify GitHub trusted publishing. If GitHub cannot start the
+job, retain the failure and do not change billing or required checks. Standard
+GitHub-hosted runners are free for this public repository; private repository
+minute limits do not by themselves establish a block here.
+
+After success, read the npm version, archive integrity and provenance
+attestations. Confirm the build identifies this repository, workflow and release
+commit, then install the published version in a fresh consumer and run its lint
+checks. Save the run URL and results in dated evidence. Keep the marketplace's
+existing pinned version until a separate consumer update is requested.

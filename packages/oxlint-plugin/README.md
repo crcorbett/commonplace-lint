@@ -11,7 +11,7 @@ Both exact versions are checked with independently installed archives. ESLint is
 Install from npm:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.1 oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.2 oxlint@1.80.0
 ```
 
 Create `oxlint.config.ts`:

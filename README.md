@@ -9,7 +9,7 @@
 Install from npm:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.1 oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.2 oxlint@1.80.0
 ```
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
