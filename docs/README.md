@@ -10,3 +10,5 @@ Dated release observations belong under `docs/evidence/`. They record what was
 checked at a particular commit; they do not replace the current runbook.
 
 - [First release evidence](evidence/2026-10-16-first-release.md) — 16 October 2026.
+
+- [First npm publication evidence](evidence/2026-10-17-npm-release.md) — 17 October 2026.
