@@ -71,16 +71,26 @@ const lint = Effect.fnUntraced(function* (source: string, target: typeof Fixture
           { cwd: temporary, stdout: "pipe", stderr: "inherit" },
         ),
       );
-      const result = yield* Effect.all({
-        exitCode: handle.exitCode,
-        stdout: handle.stdout.pipe(
-          Stream.decodeText,
-          Stream.runFold(
-            () => "",
-            (text, chunk) => text + chunk,
+      const result = yield* Effect.all(
+        {
+          exitCode: handle.exitCode,
+          stdout: handle.stdout.pipe(
+            Stream.decodeText,
+            Stream.runFold(
+              () => "",
+              (text, chunk) => text + chunk,
+            ),
           ),
-        ),
-      });
+          stderr: handle.stderr.pipe(
+            Stream.decodeText,
+            Stream.runFold(
+              () => "",
+              (text, chunk) => text + chunk,
+            ),
+          ),
+        },
+        { concurrency: "unbounded" },
+      );
       return {
         exitCode: result.exitCode,
         report: yield* Schema.decodeEffect(Report)(result.stdout),

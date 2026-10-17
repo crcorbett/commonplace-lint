@@ -129,11 +129,14 @@ const lint = Effect.fnUntraced(function* (
             (text, chunk) => text + chunk,
           ),
         );
-      return yield* Effect.all({
-        exitCode: child.exitCode,
-        stdout: read(child.stdout),
-        stderr: read(child.stderr),
-      });
+      return yield* Effect.all(
+        {
+          exitCode: child.exitCode,
+          stdout: read(child.stdout),
+          stderr: read(child.stderr),
+        },
+        { concurrency: "unbounded" },
+      );
     }),
   );
 });

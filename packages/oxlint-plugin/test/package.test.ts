@@ -11,9 +11,27 @@ const PackageArchive = Schema.NonEmptyArray(
   }),
 );
 const Report = Schema.Struct({
-  diagnostics: Schema.Array(Schema.Struct({ code: Schema.String })),
+  diagnostics: Schema.Array(Schema.Struct({ code: Schema.String, filename: Schema.String })),
   number_of_files: Schema.Int,
 });
+const BoundaryConfiguration = Schema.fromJsonString(
+  Schema.Struct({
+    jsPlugins: Schema.Array(Schema.String),
+    rules: Schema.Record(Schema.String, Schema.Json),
+  }),
+);
+const archiveCapture = (concurrent: boolean) => `
+import { Effect, Stream } from "effect";
+import { ChildProcessSpawner } from "effect/process";
+export const capture = Effect.gen(function* () {
+  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+  const handle = yield* spawner.spawn(command);
+  return yield* Effect.all({
+    exit: handle.exitCode,
+    stdout: handle.stdout.pipe(Stream.runCollect),
+    stderr: handle.stderr.pipe(Stream.runCollect)
+  }${concurrent ? ', { concurrency: "unbounded" }' : ""});
+});`;
 
 const command = Effect.fnUntraced(function* (
   cwd: string,
@@ -34,11 +52,14 @@ const command = Effect.fnUntraced(function* (
             (text, chunk) => text + chunk,
           ),
         );
-      return yield* Effect.all({
-        exitCode: child.exitCode,
-        stdout: read(child.stdout),
-        stderr: read(child.stderr),
-      });
+      return yield* Effect.all(
+        {
+          exitCode: child.exitCode,
+          stdout: read(child.stdout),
+          stderr: read(child.stderr),
+        },
+        { concurrency: "unbounded" },
+      );
     }),
   );
 });
@@ -53,7 +74,7 @@ const success = Effect.fnUntraced(function* (
   return result.stdout;
 });
 
-Array.forEach(["1.80.0", "1.85.0"], (version) =>
+Array.forEach(["1.80.0", "1.85.0", "1.86.0"], (version) =>
   it.effect(
     `installs the archive independently and runs all exports with Oxlint ${version}`,
     () =>
@@ -114,8 +135,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [27, 9, 3, 1, 1, 15, 1]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 57);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [28, 9, 3, 1, 2, 15, 1]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 59);
 for (const group of [general, effect, alchemy]) {
   for (const id of Object.keys(group.rules)) {
     const slash = id.indexOf("/");
@@ -200,6 +221,123 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
             "anti-slop(no-unknown-returns)",
             "effect(no-console)",
           ]),
+        );
+
+        // These behaviours must survive the published archive and each supported
+        // host; registration counts alone cannot establish the new rules work.
+        yield* fs.makeDirectory(`${directory}/packages/service`, { recursive: true });
+        yield* fs.writeFileString(
+          `${directory}/packages/service/package.json`,
+          '{"name":"@archive/service","type":"module","exports":{".":null,"./service":"./index.ts"}}',
+        );
+        yield* fs.writeFileString(
+          `${directory}/packages/service/index.ts`,
+          'export const service = "public";',
+        );
+        const boundaryConfig = `${directory}/boundaries.oxlint.json`;
+        yield* fs.writeFileString(
+          boundaryConfig,
+          yield* Schema.encodeEffect(BoundaryConfiguration)({
+            jsPlugins: [
+              "@commonplaces/oxlint-plugin/package",
+              "@commonplaces/oxlint-plugin/strict-effect",
+            ],
+            rules: {
+              "package/workspace-import-boundaries": [
+                "error",
+                {
+                  owners: [
+                    { id: "root", root: "." },
+                    { id: "service", root: "packages/service" },
+                  ],
+                  workspaces: [
+                    {
+                      name: "@archive/service",
+                      owner: "service",
+                      exports: { ".": false, "./service": true },
+                    },
+                  ],
+                  workspacePrefixes: ["@archive/"],
+                  forbiddenEdges: [],
+                  exceptions: [],
+                  aliases: [],
+                },
+              ],
+              "strict-effect/subprocess-pipe-capture": "error",
+            },
+          }),
+        );
+        yield* fs.writeFileString(
+          `${directory}/boundary-valid.ts`,
+          'import "@archive/service/service";' + archiveCapture(true),
+        );
+        const boundaryValid = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
+          "--config",
+          boundaryConfig,
+          "--format",
+          "json",
+          "boundary-valid.ts",
+        ]);
+        expect(boundaryValid.exitCode, boundaryValid.stderr || boundaryValid.stdout).toBe(0);
+        const boundaryValidReport = yield* Schema.decodeEffect(Schema.fromJsonString(Report))(
+          boundaryValid.stdout,
+        );
+        expect(boundaryValidReport.number_of_files).toBe(1);
+        expect(boundaryValidReport.diagnostics).toEqual([]);
+        const boundaryInvalid = [
+          {
+            file: "boundary-relative.ts",
+            source: 'import "./packages/service";',
+            code: "package(workspace-import-boundaries)",
+          },
+          {
+            file: "boundary-private.ts",
+            source: 'import "@archive/service/private";',
+            code: "package(workspace-import-boundaries)",
+          },
+          {
+            file: "boundary-nonpublic-root.ts",
+            source: 'import "@archive/service";',
+            code: "package(workspace-import-boundaries)",
+          },
+          {
+            file: "boundary-sequential.ts",
+            source: archiveCapture(false),
+            code: "strict-effect(subprocess-pipe-capture)",
+          },
+        ];
+        yield* Effect.forEach(
+          boundaryInvalid,
+          ({ file, source }) => fs.writeFileString(`${directory}/${file}`, source),
+          { discard: true },
+        );
+        const boundaryRejected = yield* command(
+          directory,
+          `${directory}/node_modules/.bin/oxlint`,
+          [
+            "--config",
+            boundaryConfig,
+            "--format",
+            "json",
+            ...Array.map(boundaryInvalid, ({ file }) => file),
+          ],
+        );
+        expect(boundaryRejected.exitCode, boundaryRejected.stderr || boundaryRejected.stdout).toBe(
+          1,
+        );
+        const boundaryRejectedReport = yield* Schema.decodeEffect(Schema.fromJsonString(Report))(
+          boundaryRejected.stdout,
+        );
+        expect(boundaryRejectedReport.number_of_files).toBe(boundaryInvalid.length);
+        expect(boundaryRejectedReport.diagnostics).toHaveLength(boundaryInvalid.length);
+        Array.forEach(boundaryInvalid, ({ file, code }) =>
+          expect(
+            Array.some(
+              boundaryRejectedReport.diagnostics,
+              (diagnostic) => diagnostic.filename === file && diagnostic.code === code,
+            ),
+            `${version}: ${file}`,
+          ).toBe(true),
         );
       }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
     120_000,

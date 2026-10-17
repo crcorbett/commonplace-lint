@@ -1,6 +1,6 @@
 {
   "name": "@commonplaces/oxlint-plugin",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Shared Oxlint rules for strict Effect TypeScript, Alchemy and repository code.",
   "license": "MIT",
   "author": "Cooper Corbett",
@@ -71,7 +71,7 @@
     "vitest": "5.0.1"
   },
   "peerDependencies": {
-    "oxlint": "1.80.0 || 1.85.0"
+    "oxlint": "1.80.0 || 1.85.0 || 1.86.0"
   },
   "engines": {
     "node": ">=22.14.0"

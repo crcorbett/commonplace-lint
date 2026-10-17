@@ -39,6 +39,7 @@ export const effect = {
     "effect/no-manual-tag": "error",
     "effect/no-raw-fetch": "error",
     "strict-effect/static-layers": "error",
+    "strict-effect/subprocess-pipe-capture": "error",
     "strict-effect/no-unchecked-index": "error",
     "strict-effect/no-native-at": "error",
     "strict-effect/tagged-error-name": "error",

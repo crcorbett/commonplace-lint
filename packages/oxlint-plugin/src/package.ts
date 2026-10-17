@@ -1,6 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 import type { ESTree } from "@oxlint/plugins";
 import { Array, Option, Predicate } from "effect";
+import { workspaceImportBoundariesRule } from "./package/workspace-import-boundaries.js";
 
 type ImportNode =
   | ESTree.ImportDeclaration
@@ -78,5 +79,6 @@ export default {
   meta: { name: "package" },
   rules: {
     "no-cross-package-source-imports": noCrossPackageSourceImports,
+    "workspace-import-boundaries": workspaceImportBoundariesRule,
   },
 };

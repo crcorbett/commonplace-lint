@@ -54,16 +54,26 @@ const lint = Effect.fnUntraced(function* (
           },
         ),
       );
-      const result = yield* Effect.all({
-        exitCode: handle.exitCode,
-        stdout: handle.stdout.pipe(
-          Stream.decodeText,
-          Stream.runFold(
-            () => "",
-            (text, chunk) => text + chunk,
+      const result = yield* Effect.all(
+        {
+          exitCode: handle.exitCode,
+          stdout: handle.stdout.pipe(
+            Stream.decodeText,
+            Stream.runFold(
+              () => "",
+              (text, chunk) => text + chunk,
+            ),
           ),
-        ),
-      });
+          stderr: handle.stderr.pipe(
+            Stream.decodeText,
+            Stream.runFold(
+              () => "",
+              (text, chunk) => text + chunk,
+            ),
+          ),
+        },
+        { concurrency: "unbounded" },
+      );
       return {
         exitCode: result.exitCode,
         report: yield* Schema.decodeEffect(Schema.fromJsonString(Report))(result.stdout),
