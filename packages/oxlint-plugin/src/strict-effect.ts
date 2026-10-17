@@ -1054,6 +1054,7 @@ const scopedImportedReference = (
                     return Array.findFirst<ESTree.BindingProperty | ESTree.BindingRestElement>(
                       (property) =>
                         property.type === "Property" &&
+                        (!property.computed || property.key.type === "Literal") &&
                         property.value.type === "Identifier" &&
                         property.value.name === name,
                     )(declaration.id.properties).pipe(
@@ -2696,6 +2697,88 @@ const websiteDataProxy = defineRule({
 // Structure ownership: facts with one owner may be written only in that owner.
 // Owner paths are exact and relative to Oxlint's working directory.
 const testFile = (filename: string) => /\.(?:test|spec)\.[cm]?[jt]sx?$/u.test(filename);
+const vitestModule = (source: string) => source === "vitest" || source === "@effect/vitest";
+
+interface TestReference {
+  readonly path: readonly string[];
+}
+
+// Keep lexical import provenance through immutable aliases, including static
+// assertion members. Unknown, shadowed and reassigned bindings are not trusted.
+const testReference = (
+  context: Context,
+  node: ESTree.Node,
+  visited: readonly ESTree.Node[] = [],
+): Option.Option<TestReference> => {
+  if (Array.some(visited, (previous) => previous === node)) return Option.none();
+  const next = [...visited, node];
+  const imported = scopedImportedReference(context, node, [], vitestModule);
+  if (Option.isSome(imported)) {
+    return Option.some({ path: Option.toArray(imported.value.name) });
+  }
+  if (node.type === "MemberExpression" && (!node.computed || node.property.type === "Literal")) {
+    return Option.all([
+      testReference(context, node.object, next),
+      propertyName(node.property),
+    ]).pipe(Option.map(([reference, name]) => ({ path: [...reference.path, name] })));
+  }
+  if (node.type !== "Identifier") return Option.none();
+  return scopedVariable(context.sourceCode.getScope(node), node.name).pipe(
+    Option.flatMap(constantDeclaration),
+    Option.flatMap((declaration) =>
+      Option.fromNullishOr(declaration.init).pipe(
+        Option.flatMap((initialiser) => testReference(context, initialiser, next)),
+        Option.flatMap((reference) => {
+          if (declaration.id.type === "Identifier") return Option.some(reference);
+          if (declaration.id.type !== "ObjectPattern") return Option.none();
+          return Array.findFirst(
+            declaration.id.properties,
+            (property) =>
+              property.type === "Property" &&
+              (!property.computed || property.key.type === "Literal") &&
+              property.value.type === "Identifier" &&
+              property.value.name === node.name,
+          ).pipe(
+            Option.flatMap((property) => {
+              if (property.type === "Property") return propertyName(property.key);
+              return Option.none();
+            }),
+            Option.map((name) => ({ path: [...reference.path, name] })),
+          );
+        }),
+      ),
+    ),
+  );
+};
+
+const noRuntimeTypeAssertions = defineRule({
+  meta: {
+    type: "problem",
+    schema: [],
+    messages: {
+      typeAssertion:
+        "Move compile-only type assertions to a .typecheck.ts or .test-d.ts file checked by TypeScript; runtime tests must exercise behaviour.",
+    },
+  },
+  create(context) {
+    if (!testFile(context.filename)) return {};
+    return {
+      CallExpression(node) {
+        if (
+          Option.exists(
+            testReference(context, node.callee),
+            ({ path }) =>
+              path.length === 1 &&
+              Array.some(path, (name) => name === "expectTypeOf" || name === "assertType"),
+          )
+        ) {
+          context.report({ node, messageId: "typeAssertion" });
+        }
+      },
+    };
+  },
+});
+
 const ownedBy = (context: Context, files: readonly string[]) =>
   Array.some(files, (file) => exactOwnedFile(context.filename, context.cwd, file));
 const ownerFilesSchema = { type: "array", items: { type: "string", minLength: 1 } };
@@ -2731,7 +2814,124 @@ const PublicHostOptions = Schema.Struct({
   hosts: Schema.Array(Schema.String),
   allowedFiles: Schema.Array(Schema.String),
   allowTestFiles: Schema.Boolean,
+  allowTestAssertions: Schema.optionalKey(Schema.Boolean),
+  allowedDeclarations: Schema.optionalKey(
+    Schema.Array(Schema.Struct({ file: Schema.String, names: Schema.Array(Schema.String) })),
+  ),
 });
+
+const topLevelConstant = (node: ESTree.Node): Option.Option<string> => {
+  const parent = node.parent;
+  if (!parent) return Option.none();
+  if (
+    parent.type === "ArrowFunctionExpression" ||
+    parent.type === "FunctionExpression" ||
+    parent.type === "FunctionDeclaration"
+  )
+    return Option.none();
+  if (parent.type !== "VariableDeclarator") return topLevelConstant(parent);
+  if (parent.init !== node || parent.id.type !== "Identifier") return Option.none();
+  const declaration = parent.parent;
+  if (declaration?.type !== "VariableDeclaration" || declaration.kind !== "const") {
+    return Option.none();
+  }
+  const statement = declaration.parent;
+  if (
+    statement?.type === "Program" ||
+    (statement?.type === "ExportNamedDeclaration" && statement.parent.type === "Program")
+  )
+    return Option.some(parent.id.name);
+  return Option.none();
+};
+
+const expectedMatchers = [
+  "toBe",
+  "toEqual",
+  "toStrictEqual",
+  "toMatchObject",
+  "toContain",
+  "toContainEqual",
+  "toMatch",
+];
+const expectedAssertions = [
+  "equal",
+  "notEqual",
+  "strictEqual",
+  "notStrictEqual",
+  "deepEqual",
+  "notDeepEqual",
+  "deepStrictEqual",
+  "notDeepStrictEqual",
+  "include",
+  "notInclude",
+  "deepInclude",
+  "notDeepInclude",
+  "match",
+  "notMatch",
+];
+
+const importedExpectation = (context: Context, node: ESTree.Node): boolean => {
+  if (node.type === "CallExpression") {
+    return Option.exists(
+      testReference(context, node.callee),
+      ({ path }) =>
+        (path.length === 1 && Array.contains(path, "expect")) ||
+        (path.length === 2 &&
+          Option.contains(Array.head(path), "expect") &&
+          Option.contains(Array.get(path, 1), "soft")),
+    );
+  }
+  return (
+    node.type === "MemberExpression" &&
+    (!node.computed || node.property.type === "Literal") &&
+    Option.exists(propertyName(node.property), (name) =>
+      Array.contains(["not", "resolves", "rejects"], name),
+    ) &&
+    importedExpectation(context, node.object)
+  );
+};
+
+// Only static expected-value data is exempt. A call or constructor between a
+// literal and the assertion is setup/computation, even inside an expected arg.
+const assertionExpectedValue = (context: Context, node: ESTree.Node): boolean => {
+  const parent = node.parent;
+  if (!parent) return false;
+  if (parent.type === "CallExpression") {
+    const expected = Array.get(parent.arguments, 1);
+    if (
+      Option.exists(expected, (argument) => argument === node) &&
+      Option.exists(
+        testReference(context, parent.callee),
+        ({ path }) =>
+          path.length === 2 &&
+          Option.contains(Array.head(path), "assert") &&
+          Option.exists(Array.get(path, 1), (name) => Array.contains(expectedAssertions, name)),
+      )
+    )
+      return true;
+    return (
+      parent.callee.type === "MemberExpression" &&
+      (!parent.callee.computed || parent.callee.property.type === "Literal") &&
+      Option.exists(Array.head(parent.arguments), (argument) => argument === node) &&
+      Option.exists(propertyName(parent.callee.property), (name) =>
+        Array.contains(expectedMatchers, name),
+      ) &&
+      importedExpectation(context, parent.callee.object)
+    );
+  }
+  if (
+    parent.type === "ArrayExpression" ||
+    parent.type === "ObjectExpression" ||
+    parent.type === "TemplateLiteral" ||
+    (parent.type === "Property" &&
+      parent.kind === "init" &&
+      !parent.method &&
+      (parent.value === node ||
+        (parent.key === node && (!parent.computed || node.type === "Literal"))))
+  )
+    return assertionExpectedValue(context, parent);
+  return false;
+};
 // A configured host or any subdomain of it, as a whole hostname.
 const hostPattern = (host: string) =>
   new RegExp(`(?:^|[^a-z0-9-])(?:[a-z0-9-]+\\.)*${escapePattern(host)}(?![a-z0-9-])`, "iu");
@@ -2750,6 +2950,16 @@ const publicHostLiterals = defineRule({
           },
           allowedFiles: ownerFilesSchema,
           allowTestFiles: { type: "boolean" },
+          allowTestAssertions: { type: "boolean" },
+          allowedDeclarations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: { file: { type: "string", minLength: 1 }, names: ownerFilesSchema },
+              required: ["file", "names"],
+              additionalProperties: false,
+            },
+          },
         },
         required: ["hosts", "allowedFiles", "allowTestFiles"],
         additionalProperties: false,
@@ -2763,18 +2973,29 @@ const publicHostLiterals = defineRule({
     const options = Array.head(context.options).pipe(
       Option.flatMap(Schema.decodeUnknownOption(PublicHostOptions)),
     );
-    if (
-      Option.isNone(options) ||
-      ownedBy(context, options.value.allowedFiles) ||
-      (options.value.allowTestFiles && testFile(context.filename))
-    ) {
+    if (Option.isNone(options) || (options.value.allowTestFiles && testFile(context.filename))) {
       return {};
     }
+    const declarationOwner = Array.findFirst(options.value.allowedDeclarations ?? [], ({ file }) =>
+      ownedBy(context, [file]),
+    );
+    const fileOwner = ownedBy(context, options.value.allowedFiles);
+    if (fileOwner && Option.isNone(declarationOwner)) return {};
     const patterns = Array.map(options.value.hosts, (host): readonly [string, RegExp] => [
       host,
       hostPattern(host),
     ]);
     return textVisitors((node, text) => {
+      if (
+        (fileOwner &&
+          Option.exists(declarationOwner, ({ names }) =>
+            Option.exists(topLevelConstant(node), (name) => Array.contains(names, name)),
+          )) ||
+        (options.value.allowTestAssertions === true &&
+          testFile(context.filename) &&
+          assertionExpectedValue(context, node))
+      )
+        return;
       Option.match(
         Array.findFirst(patterns, ([, pattern]) => pattern.test(text)),
         {
@@ -3435,6 +3656,7 @@ export default eslintCompatPlugin({
     "no-unchecked-json": noUncheckedJson,
     "no-runtime-outside-boundary": noRuntimeOutsideBoundary,
     "no-native-work": noNativeWork,
+    "no-runtime-type-assertions": noRuntimeTypeAssertions,
     "no-imperative-collections": noImperativeCollections,
     "public-host-literals": publicHostLiterals,
     "route-literal-ownership": routeLiteralOwnership,
