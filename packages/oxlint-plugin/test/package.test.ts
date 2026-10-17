@@ -105,14 +105,14 @@ Array.forEach(["1.80.0", "1.85.0"], (version) =>
           `${directory}/inspect.mjs`,
           `
 import assert from "node:assert/strict";
-import { general, effect, alchemy } from "@commonplace/oxlint-plugin";
-import strict from "@commonplace/oxlint-plugin/strict-effect";
-import local from "@commonplace/oxlint-plugin/effect";
-import secrets from "@commonplace/oxlint-plugin/alchemy";
-import bun from "@commonplace/oxlint-plugin/bun";
-import packages from "@commonplace/oxlint-plugin/package";
-import style from "@commonplace/oxlint-plugin/anti-slop";
-import styleEffect from "@commonplace/oxlint-plugin/anti-slop-effect";
+import { general, effect, alchemy } from "@commonplaces/oxlint-plugin";
+import strict from "@commonplaces/oxlint-plugin/strict-effect";
+import local from "@commonplaces/oxlint-plugin/effect";
+import secrets from "@commonplaces/oxlint-plugin/alchemy";
+import bun from "@commonplaces/oxlint-plugin/bun";
+import packages from "@commonplaces/oxlint-plugin/package";
+import style from "@commonplaces/oxlint-plugin/anti-slop";
+import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect];
 assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [27, 9, 3, 1, 1, 15, 1]);
 assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 57);
@@ -133,12 +133,12 @@ assert.equal(effect.rules["effect/require-service-operation-instrumentation"], u
         yield* fs.writeFileString(
           `${directory}/oxlint.config.ts`,
           `import { defineConfig } from "oxlint";
-import { general, effect, alchemy } from "@commonplace/oxlint-plugin";
+import { general, effect, alchemy } from "@commonplaces/oxlint-plugin";
 export default defineConfig({ extends: [general, effect, alchemy] });`,
         );
         yield* fs.writeFileString(
           `${directory}/usage.ts`,
-          'import { defineConfig } from "oxlint"; import { general, effect, alchemy } from "@commonplace/oxlint-plugin"; import strict from "@commonplace/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
+          'import { defineConfig } from "oxlint"; import { general, effect, alchemy } from "@commonplaces/oxlint-plugin"; import strict from "@commonplaces/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
         );
         yield* success(directory, `${repository}node_modules/.bin/tsc`, [
           "--noEmit",

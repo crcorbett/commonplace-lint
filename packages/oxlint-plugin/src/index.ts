@@ -2,7 +2,7 @@ import type { OxlintConfig } from "oxlint";
 
 /** General code checks, with no project-specific file names or settings. */
 export const general = {
-  jsPlugins: ["@commonplace/oxlint-plugin/anti-slop", "@commonplace/oxlint-plugin/package"],
+  jsPlugins: ["@commonplaces/oxlint-plugin/anti-slop", "@commonplaces/oxlint-plugin/package"],
   rules: {
     "anti-slop/no-chained-type-assertions": "error",
     "anti-slop/no-conditional-empty-object-spread": "error",
@@ -26,10 +26,10 @@ export const general = {
 /** Effect code checks. Add the general group separately if wanted. */
 export const effect = {
   jsPlugins: [
-    "@commonplace/oxlint-plugin/effect",
-    "@commonplace/oxlint-plugin/strict-effect",
-    "@commonplace/oxlint-plugin/bun",
-    "@commonplace/oxlint-plugin/anti-slop-effect",
+    "@commonplaces/oxlint-plugin/effect",
+    "@commonplaces/oxlint-plugin/strict-effect",
+    "@commonplaces/oxlint-plugin/bun",
+    "@commonplaces/oxlint-plugin/anti-slop-effect",
   ],
   rules: {
     "effect/no-ambient-process": "error",
@@ -56,7 +56,7 @@ export const effect = {
 
 /** Native Alchemy configuration and secret-source checks. */
 export const alchemy = {
-  jsPlugins: ["@commonplace/oxlint-plugin/alchemy", "@commonplace/oxlint-plugin/strict-effect"],
+  jsPlugins: ["@commonplaces/oxlint-plugin/alchemy", "@commonplaces/oxlint-plugin/strict-effect"],
   rules: {
     "alchemy-secrets/native-sources": "error",
     "alchemy-secrets/explicit-stack-sources": "error",

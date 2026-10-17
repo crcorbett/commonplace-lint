@@ -6,7 +6,7 @@
       "name": "@commonplace/lint-repository",
       "devDependencies": {
         "@changesets/cli": "catalog:",
-        "@commonplace/oxlint-plugin": "workspace:*",
+        "@commonplaces/oxlint-plugin": "workspace:*",
         "@effect/platform-node": "catalog:",
         "@effect/tsgo": "catalog:",
         "@effect/vitest": "catalog:",
@@ -22,8 +22,8 @@
       },
     },
     "packages/oxlint-plugin": {
-      "name": "@commonplace/oxlint-plugin",
-      "version": "0.1.0",
+      "name": "@commonplaces/oxlint-plugin",
+      "version": "0.1.1",
       "dependencies": {
         "@oxlint/plugins": "1.80.0",
         "effect": "4.0.2",
@@ -93,7 +93,7 @@
 
     "@clack/prompts": ["@clack/prompts@1.8.1", "", { "dependencies": { "@clack/core": "1.5.1", "fast-string-width": "^3.0.2", "fast-wrap-ansi": "^0.2.0", "sisteransi": "^1.0.5" } }, "sha512-dlT1m5e/0yUL0kRNcQn7yGLVThkgbB0Ga/1AmfDDC/8ik6AIiSf2QLQO2zPYvefsHP0aFgxO93cVLCCfDp7kzQ=="],
 
-    "@commonplace/oxlint-plugin": ["@commonplace/oxlint-plugin@workspace:packages/oxlint-plugin"],
+    "@commonplaces/oxlint-plugin": ["@commonplaces/oxlint-plugin@workspace:packages/oxlint-plugin"],
 
     "@effect/platform-node": ["@effect/platform-node@4.0.2", "", { "dependencies": { "@effect/platform-node-shared": "^4.0.2", "undici": "^8.11.2" }, "peerDependencies": { "effect": "^4.0.2", "redis": ">=5.0.0 <7.0.0" } }, "sha512-RWesXBQStnFHdD465gR5thFKgXO7FSyCKRZ56nWXB7PedNVzr8vV0nb/3MULLdri493sMz/b/pmGBTb6K8cBjQ=="],
 

@@ -1,8 +1,9 @@
 # Release Commonplace Lint
 
-GitHub archives work before an npm account exists. npm account setup, scope
-ownership and publication remain deferred. Do not describe a GitHub release as
-npm publication.
+The npm account `crcorbett` owns the `commonplaces` organisation, checked on
+17 October 2026. The package is now `@commonplaces/oxlint-plugin`; the original
+GitHub v0.1.0 archive retains its old name. npm publication still needs explicit
+authority and a checked archive. Do not describe a GitHub release as npm publication.
 
 ## GitHub release from a workstation
 
@@ -30,7 +31,8 @@ npm publication.
    check the package version. Record the commit, checks, checksum and release
    URL in a dated file under `docs/evidence/`, then merge that record's PR.
 6. Only after this proof, update consuming projects and marketplace templates
-   to the exact release URL. Their lockfiles retain the archive integrity.
+   to the exact npm version (or release URL before npm publication). Their
+   lockfiles retain the archive integrity.
 
 If CI cannot start because of account limits, read the failed job annotations
 and record that fact separately from passing local checks. Do not change
@@ -42,19 +44,19 @@ release, and move consumers back to the last checked version if needed. If a
 release request has an uncertain result, read the existing release and asset
 before retrying. Resume only from the last confirmed step.
 
-## First npm publication, later
+## First npm publication
 
-1. Create and verify an npm account, configure its required security settings,
-   and secure the `commonplace` scope. Scope ownership is not confirmed. If it
-   is unavailable, change the package name, imports and consumers together.
+1. Check `npm whoami` and `npm org ls commonplaces --json` before publishing.
+   The expected user is `crcorbett`, with owner access. Complete any security
+   checks requested by npm.
 2. Obtain explicit npm publication authority. Use the exact reviewed GitHub
    release archive after comparing its checksum; sign in with `npm login` and
    check `npm whoami`. Never save a token in this repository or a chat.
 3. Publish and verify the registry result:
 
    ```sh
-   npm publish commonplace-oxlint-plugin-0.1.0.tgz --access public --ignore-scripts
-   npm view @commonplace/oxlint-plugin@0.1.0 name version dist.integrity
+   npm publish commonplaces-oxlint-plugin-0.1.1.tgz --access public --ignore-scripts
+   npm view @commonplaces/oxlint-plugin@0.1.1 name version dist.integrity
    ```
 
 4. Install that exact registry version in a fresh consumer and run its lint

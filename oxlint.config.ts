@@ -1,5 +1,5 @@
 import { recommended as effectRecommended } from "@effect/tsgo/oxlint-presets";
-import { general, effect, alchemy } from "@commonplace/oxlint-plugin";
+import { general, effect, alchemy } from "@commonplaces/oxlint-plugin";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({

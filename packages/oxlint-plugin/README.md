@@ -1,4 +1,4 @@
-# @commonplace/oxlint-plugin
+# @commonplaces/oxlint-plugin
 
 57 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. This package supports **Oxlint 1.80.0 or 1.85.0** and **Node 22.14 or newer**.
@@ -8,17 +8,17 @@ Both exact versions are checked with independently installed archives. ESLint is
 
 ## Install
 
-npm publication is pending. Install the compiled GitHub release archive:
+Install from npm:
 
 ```sh
-npm install --save-dev --save-exact https://github.com/crcorbett/commonplace-lint/releases/download/v0.1.0/commonplace-oxlint-plugin-0.1.0.tgz oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.1.1 oxlint@1.80.0
 ```
 
 Create `oxlint.config.ts`:
 
 ```ts
 import { defineConfig } from "oxlint";
-import { general, effect, alchemy } from "@commonplace/oxlint-plugin";
+import { general, effect, alchemy } from "@commonplaces/oxlint-plugin";
 
 export default defineConfig({
   extends: [general, effect, alchemy],
@@ -36,7 +36,7 @@ the subpaths below. For example, a JSON configuration can enable one rule:
 
 ```json
 {
-  "jsPlugins": ["@commonplace/oxlint-plugin/strict-effect"],
+  "jsPlugins": ["@commonplaces/oxlint-plugin/strict-effect"],
   "rules": { "strict-effect/static-layers": "error" }
 }
 ```
@@ -48,7 +48,7 @@ but excluded from the groups. Configure them explicitly, for example:
 
 ```ts
 import { defineConfig } from "oxlint";
-import { general, effect } from "@commonplace/oxlint-plugin";
+import { general, effect } from "@commonplaces/oxlint-plugin";
 
 export default defineConfig({
   extends: [general, effect],
