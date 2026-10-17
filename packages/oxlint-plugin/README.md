@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-59 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+61 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. This package supports **Oxlint 1.80.0, 1.85.0 or 1.86.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.80.0; consuming projects may use any supported version.
@@ -8,11 +8,15 @@ All three exact versions are checked with independently installed archives. ESLi
 
 ## Install
 
-Install from npm:
+Install the checked GitHub release archive:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.2.0 oxlint@1.80.0
+npm install --save-dev --save-exact https://github.com/crcorbett/commonplace-lint/releases/download/v0.3.0/commonplaces-oxlint-plugin-0.3.0.tgz oxlint@1.80.0
 ```
+
+The npm registry currently provides `@commonplaces/oxlint-plugin@0.1.2` (57 rules).
+The 0.3.0 additions below require the GitHub archive until a separate npm release
+is published. GitHub archive publication does not publish a registry version.
 
 Create `oxlint.config.ts`:
 
@@ -96,11 +100,11 @@ package subpaths; keep your existing rule settings.
 
 | Package subpath     | Rule prefix         | Rules |
 | ------------------- | ------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`    |    28 |
+| `/strict-effect`    | `strict-effect/`    |    29 |
 | `/effect`           | `effect/`           |     9 |
 | `/alchemy`          | `alchemy-secrets/`  |     3 |
 | `/bun`              | `bun/`              |     1 |
-| `/package`          | `package/`          |     2 |
+| `/package`          | `package/`          |     3 |
 | `/anti-slop`        | `anti-slop/`        |    15 |
 | `/anti-slop-effect` | `anti-slop-effect/` |     1 |
 
@@ -185,3 +189,74 @@ or infrastructure stack inside the package.
 
 The strict Effect rules were adapted from Cooper's DAW rules at `e47ecfb` and
 subsequent Commonplace rules. The package's MIT licence covers this lint code.
+
+## Keep address ownership precise
+
+`strict-effect/public-host-literals` can check test setup without replacing
+independent expected values with the implementation under test:
+
+```ts
+"strict-effect/public-host-literals": ["error", {
+  hosts: ["example.com"],
+  allowedFiles: ["packages/platform/src/site-address.ts"],
+  allowedDeclarations: [{
+    file: "packages/platform/src/site-address.ts",
+    names: ["siteHostName"],
+  }],
+  allowTestFiles: false,
+  allowTestAssertions: true,
+}]
+```
+
+The named top-level `const` declaration owns the literal hostname. Derive
+`api` and `www` hostnames from it; use native deployment outputs for actual
+stage-specific origins. Files with a declaration restriction do not gain a
+whole-file exemption. Declaration entries cannot grant ownership to a file
+absent from `allowedFiles`. Existing configurations without these optional
+settings keep their previous behaviour.
+
+The assertion exception permits recognised imported Vitest or `@effect/vitest`
+assertions' direct expected arguments, including static arrays and objects.
+It does not trace table-driven expected values through variables or callbacks;
+keep those oracles in narrowly configured declarations or use a local
+suppression explaining their role. It does
+not exempt their actual arguments, setup values, constructors, arbitrary calls
+or shadowed assertion names. A test using unrecognised assertion helpers can
+keep an explicit, narrowly scoped lint suppression with its reason. The rule
+checks written literal text; it cannot prove the value of arbitrary computed
+strings or that a configured canonical owner is semantically correct.
+
+## Separate compiler assertions from runtime tests
+
+The `effect` group enables `strict-effect/no-runtime-type-assertions`. It rejects
+calls to imported Vitest or `@effect/vitest` `expectTypeOf` and `assertType` in
+`.test.*` and `.spec.*` files. Aliases and namespace imports are recognised;
+unrelated or shadowed local functions are not treated as Vitest APIs.
+
+Move these checks into the existing TypeScript flow, for example
+`inference.typecheck.ts`, or a configured Vitest `.test-d.ts` file. Include those
+files in the compiler project and preserve negative brand/readonly assertions.
+Do not create runtime services or registries only to feed a type assertion.
+This syntax rule does not prove that the receiving compiler configuration
+includes the destination file.
+
+## Register one owner for a prohibition
+
+`package/no-redundant-rule-registrations` is opt-in. Configure pairs only after
+checking that the owner covers the redundant rule under the receiving project's
+options and file scopes:
+
+```ts
+"package/no-redundant-rule-registrations": ["error", {
+  pairs: [{ owner: "effect/no-throw", redundant: "legacy/no-throw" }],
+}]
+```
+
+Those identifiers are illustrative consumer rules, not bundled equivalences.
+The check reports when both members are statically enabled in the same Oxlint
+`rules` object. Disabled owners do not establish redundancy. Separate overrides
+are checked independently. An opaque spread or dynamic key clears preceding
+known registrations; later explicit keys can establish them again. Imported or
+spread contents still require effective-configuration review. Keep negative fixtures that
+assert the intended diagnostic once and the redundant diagnostic is absent.
+There is no automatic fix: removing a registration needs coverage evidence.

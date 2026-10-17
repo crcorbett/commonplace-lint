@@ -82,6 +82,12 @@ ${body}
 
 const rejected = [
   {
+    name: "mkString drains remain concurrent with exit",
+    source: program(`return yield* Effect.all({ exitCode: handle.exitCode,
+stdout: handle.stdout.pipe(Stream.decodeText, Stream.mkString), stderr: handle.stderr.pipe(Stream.decodeText, Stream.mkString) });`),
+    reports: 1,
+  },
+  {
     name: "exit then both pipes",
     source: program(`const exit = yield* handle.exitCode;
 const out = yield* handle.stdout.pipe(Stream.decodeText, Stream.runCollect);

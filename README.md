@@ -1,16 +1,20 @@
 # Commonplace Lint
 
-59 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
+61 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
 `@commonplaces/oxlint-plugin`. Supports Oxlint **1.80.0, 1.85.0 or 1.86.0** and Node
 **22.14 or newer**. Licensed under MIT.
 
 ## Install
 
-Install from npm:
+Install the checked GitHub release archive:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.2.0 oxlint@1.80.0
+npm install --save-dev --save-exact https://github.com/crcorbett/commonplace-lint/releases/download/v0.3.0/commonplaces-oxlint-plugin-0.3.0.tgz oxlint@1.80.0
 ```
+
+The npm registry currently provides `@commonplaces/oxlint-plugin@0.1.2` (57 rules).
+The 0.3.0 additions below require the GitHub archive until a separate npm release
+is published. GitHub archive publication does not publish a registry version.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`

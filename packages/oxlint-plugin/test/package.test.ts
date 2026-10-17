@@ -135,8 +135,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [28, 9, 3, 1, 2, 15, 1]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 59);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [29, 9, 3, 1, 3, 15, 1]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 61);
 for (const group of [general, effect, alchemy]) {
   for (const id of Object.keys(group.rules)) {
     const slash = id.indexOf("/");

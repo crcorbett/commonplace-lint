@@ -14,7 +14,15 @@ const functionNode = (node: ESTree.Node) =>
   node.type === "ArrowFunctionExpression" ||
   node.type === "FunctionExpression" ||
   node.type === "FunctionDeclaration";
-const terminalNames = ["run", "runCollect", "runDrain", "runFold", "runFoldEffect", "runForEach"];
+const terminalNames = [
+  "run",
+  "runCollect",
+  "runDrain",
+  "runFold",
+  "runFoldEffect",
+  "runForEach",
+  "mkString",
+];
 const streamTerminal = (context: Context, node: ESTree.Node): boolean => {
   if (node.type === "CallExpression") return streamTerminal(context, node.callee);
   return Array.some(terminalNames, (name) => operation(context, node, "effect/Stream", name));

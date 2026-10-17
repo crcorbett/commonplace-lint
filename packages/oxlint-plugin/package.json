@@ -1,6 +1,6 @@
 {
   "name": "@commonplaces/oxlint-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shared Oxlint rules for strict Effect TypeScript, Alchemy and repository code.",
   "license": "MIT",
   "author": "Cooper Corbett",
