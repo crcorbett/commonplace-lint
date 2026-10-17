@@ -43,7 +43,11 @@ compiled, documentation, manifest and licence files, eight compiled exports and
 - SHA-256: `3b2cc30cf293fad551dd9f0f6717ae64d205a8d9675850d6ed042421c1c60cc8`
 - Integrity: `sha512-mAXhyfWvVdAJS/tLWT52wNuXkPbnyFxrzKdU7KCUNf9uaJmuPHBhrBmrWQphWQAXtsbynq4TXdKy0GnB4EVMBQ==`
 
-## Publication status
+## Initial publication snapshot
+
+The following status was captured before the authorised npm workflow ran.
+The later [npm 0.3.0 publication record](2026-10-17-npm-030.md) records the
+follow-up separately; the local archive identity above remains unchanged.
 
 The new `v0.3.0` tag was pushed and read back at the exact merge commit above.
 The native GitHub release attempt created a draft, but its archive upload to
@@ -63,3 +67,14 @@ Unauthenticated public archive installation, registry integrity/provenance,
 normal generated-repository latest refresh, and the final marketplace 0.12.0
 release remain pending. A successful local archive test does not establish any
 of those publication results. Existing tags and releases were preserved.
+
+## npm follow-up
+
+Cooper subsequently authorised the existing GitHub trusted publisher for the
+npm upload. Version 0.3.0 is now public on npm; its published archive has a
+different hash because CI's tar members use `0644` permissions instead of the
+local archive's `0600`. All 69 members have identical content, type and order.
+See the [follow-up record](2026-10-17-npm-030.md) for the distinct published hash,
+source and qualification. The GitHub release remains an assetless draft after
+the upload-host HTTP 401; npm availability does not establish GitHub archive
+availability, marketplace qualification or the plugin release.
