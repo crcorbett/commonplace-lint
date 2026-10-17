@@ -1,3 +1,4 @@
+import { subprocessPipeCapture } from "./subprocess-pipe-capture.js";
 import { defineRule, eslintCompatPlugin } from "@oxlint/plugins";
 import type { Context, ESTree, Scope, Variable } from "@oxlint/plugins";
 import * as Array from "effect/Array";
@@ -3645,6 +3646,7 @@ export default eslintCompatPlugin({
     "no-native-client-replica": noNativeClientReplica,
     "website-rpc-boundary": websiteRpcBoundary,
     "static-layers": staticLayers,
+    "subprocess-pipe-capture": subprocessPipeCapture,
     "no-unchecked-index": noUncheckedIndex,
     "no-native-at": noNativeAt,
     "runtime-file-convention": runtimeFileConvention,

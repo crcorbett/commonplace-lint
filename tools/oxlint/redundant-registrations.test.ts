@@ -58,11 +58,14 @@ const lint = Effect.fnUntraced(function* (
             (text, chunk) => text + chunk,
           ),
         );
-      const result = yield* Effect.all({
-        exitCode: handle.exitCode,
-        stdout: read(handle.stdout),
-        stderr: read(handle.stderr),
-      });
+      const result = yield* Effect.all(
+        {
+          exitCode: handle.exitCode,
+          stdout: read(handle.stdout),
+          stderr: read(handle.stderr),
+        },
+        { concurrency: "unbounded" },
+      );
       const report = yield* Schema.decodeEffect(Report)(result.stdout);
       return {
         ...result,

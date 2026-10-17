@@ -50,10 +50,14 @@ const lint = Effect.fnUntraced(function* (
           { cwd: temporary, stdout: "pipe", stderr: "pipe" },
         ),
       );
-      const result = yield* Effect.all({
-        exitCode: handle.exitCode,
-        stdout: handle.stdout.pipe(Stream.decodeText, Stream.mkString),
-      });
+      const result = yield* Effect.all(
+        {
+          exitCode: handle.exitCode,
+          stdout: handle.stdout.pipe(Stream.decodeText, Stream.mkString),
+          stderr: handle.stderr.pipe(Stream.decodeText, Stream.mkString),
+        },
+        { concurrency: "unbounded" },
+      );
       const report = yield* Schema.decodeEffect(Report)(result.stdout);
       return {
         exitCode: result.exitCode,

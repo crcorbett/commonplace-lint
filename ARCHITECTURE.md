@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 59 rules and three configuration groups
+       ├── src: 61 rules and three configuration groups
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -40,7 +40,7 @@ Bun 1.4.0 and exact dependency versions come from the existing qualified
 implementation, not a claim that they are the newest registry versions. Effect
 and platform dependencies remain on 4.0.2. Upgrading versions requires fresh
 archive tests with every supported Oxlint host. The host SDK remains 1.80.0;
-peer support is exactly 1.80.0 or 1.85.0.
+peer support is exactly 1.80.0, 1.85.0 or 1.86.0.
 
 `bun run test` builds first, then runs rule and archive consumers.
 `bun run verification` checks format, lint, both Knip graphs, TypeScript, build,

@@ -6,7 +6,7 @@ Oxfmt, Vitest, Knip, Changesets and CI. There is no application runtime or
 infrastructure stack. Follow [ARCHITECTURE.md](ARCHITECTURE.md) and
 [the documentation router](docs/README.md).
 
-Keep all 59 rule implementations here. Consumers install compiled releases;
+Keep all 61 rule implementations here. Consumers install compiled releases;
 do not copy rules into marketplace skills or other projects. Export explicit
 package subpaths. Use the same compiled exports locally and in archives.
 
