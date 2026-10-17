@@ -1,6 +1,7 @@
 import { defineRule } from "@oxlint/plugins";
 import type { ESTree } from "@oxlint/plugins";
 import { Array, Option, Predicate } from "effect";
+import { noRedundantRuleRegistrations } from "./config.js";
 
 type ImportNode =
   | ESTree.ImportDeclaration
@@ -78,5 +79,6 @@ export default {
   meta: { name: "package" },
   rules: {
     "no-cross-package-source-imports": noCrossPackageSourceImports,
+    "no-redundant-rule-registrations": noRedundantRuleRegistrations,
   },
 };

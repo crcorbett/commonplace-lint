@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 57 rules and three configuration groups
+       ├── src: 59 rules and three configuration groups
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -47,13 +47,13 @@ peer support is exactly 1.80.0 or 1.85.0.
 workspace ownership and documentation links. Turbo inputs include root config
 read by each package task. `bun run pack` cleans and builds the package and
 writes a standard npm archive. Only dist, README, package.json and LICENSE are
-included. Tests prove accepted and rejected code, exported groups and all 57
+included. Tests prove accepted and rejected code, exported groups and all 59
 registrations outside the workspace.
 
 ## Releases
 
-GitHub owns source, tags and downloadable package archives. npm will be an
-additional distribution channel after account and scope setup. Release commands
+GitHub owns source, tags and downloadable package archives. npm also distributes the published 0.1.x releases. A new GitHub archive does
+not advance the registry version. Release commands
 are in the runbook. Both channels distribute the same compiled package.
 
 The release pattern follows Alchemy's own use of GitHub Actions and a package
