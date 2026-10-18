@@ -6,24 +6,22 @@
 
 ## Install
 
-Install the latest published npm version and save the exact resolved version
-(61 rules in the published 0.3.1 release):
+Install the latest published npm version and save the exact resolved version:
 
 ```sh
 npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
 ```
 
-The source candidate is 0.4.0 with 106 rules; publication is pending.
-The qualified npm `latest` is 0.3.1. See [the publication record](docs/evidence/2026-10-17-npm-031.md)
-for its source, canonical archive and independent checks. The published GitHub
-release links that verified npm archive; no binary archive is attached to the
-GitHub release. npm installation does not depend on a GitHub mirror.
+The qualified npm `latest` is 0.4.0 with 106 rules and the complete `strict`
+profile. See [the publication record](docs/evidence/2026-10-18-npm-040.md)
+for the reviewed source, canonical registry archive, provenance and independent
+checks. npm installation does not depend on a GitHub archive mirror.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
 when upgrading.
-See [package usage](packages/oxlint-plugin/README.md) for the `general`, `effect`
-and `alchemy` groups, individual rules and project settings.
+See [package usage](packages/oxlint-plugin/README.md) for all six configuration groups, the `strict` composition, individual rules
+and project settings.
 
 ## Develop
 
