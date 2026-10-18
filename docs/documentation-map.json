@@ -64,6 +64,10 @@
     {
       "path": "docs/evidence/2026-10-18-aliases-ascii.txt",
       "owner": "dated native Calldiff import resolver output"
+    },
+    {
+      "path": "docs/evidence/2026-10-18-npm-040.md",
+      "owner": "dated npm 0.4.0 publication, canonical archive equality, provenance and independent public registry qualification"
     }
   ]
 }

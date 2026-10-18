@@ -52,10 +52,12 @@ registrations outside the workspace.
 
 ## Releases
 
-GitHub owns source, tags and downloadable package archives. npm also distributes the published 0.1.x releases. A new GitHub archive does
-not advance the registry version. Release commands
-are in the runbook. Both channels distribute the same compiled package.
+GitHub owns source, tags and optional package archive mirrors. npm distributes
+the canonical compiled releases. A GitHub release does not advance the registry
+version. The release runbook owns publication and independent archive readback;
+a mirror is a separate distribution route.
 
 The release pattern follows Alchemy's own use of GitHub Actions and a package
 manager; no Alchemy state or deployment stack is needed for a library release.
-The npm workflow is manual and stays unused until publication is authorised.
+The npm workflow is manual and uses short-lived GitHub identity for authorised
+publication. No stored npm token or infrastructure deployment is needed.

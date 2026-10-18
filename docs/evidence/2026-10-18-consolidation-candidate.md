@@ -1,6 +1,6 @@
 # 0.4.0 consolidation candidate — 18 October 2026
 
-State: local qualification complete; review and npm publication pending.
+State at candidate qualification: local checks complete; review and npm publication pending.
 The qualified registry `latest` remains 0.3.1. This record does not establish
 publication, provenance attestation or a GitHub release.
 
@@ -80,3 +80,10 @@ SHA-256 and a newline. Its 51 inputs are package source TypeScript, the package
 manifest/README/licence and both package tsconfigs, plus the root manifest and
 Bun lock. It excludes generated output and this receipt. The archive checksum
 is a local qualification result, not a registry provenance claim.
+
+## Publication follow-up
+
+[The 0.4.0 publication record](2026-10-18-npm-040.md) records the later merge,
+trusted publication, canonical registry archive and independent qualification.
+The candidate digest above remains the protected local archive identity; it
+is distinct from the public archive packed with CI file modes.
