@@ -175,7 +175,7 @@ Array.forEach(cases, ({ rule, invalid, valid }) => {
 });
 
 it.effect(
-  "uses configured entry files and service names, and rejects missing or invalid tracing settings",
+  "supports configured and automatic tracing, and rejects malformed or empty selectors",
   () =>
     Effect.gen(function* () {
       const fs = yield* FileSystem.FileSystem;
@@ -198,8 +198,22 @@ it.effect(
       expect(
         Array.every(report.diagnostics, (diagnostic) => diagnostic.filename.endsWith("other.ts")),
       ).toBe(true);
+      yield* fs.writeFileString(
+        `${directory}/automatic.ts`,
+        'import { Orders } from "./service";\n' + source,
+      );
+      const automatic = yield* lint(
+        directory,
+        { "effect/require-service-operation-instrumentation": "error" },
+        ["automatic.ts"],
+        "effect",
+      );
+      expect(automatic.exitCode, automatic.stderr || automatic.stdout).toBe(0);
       yield* Effect.forEach(
-        ["error", ["error", { serviceNames: "Orders" }]],
+        [
+          ["error", { serviceNames: "Orders" }],
+          ["error", { serviceNames: [] }],
+        ],
         Effect.fnUntraced(function* (setting) {
           const invalid = yield* lint(
             directory,

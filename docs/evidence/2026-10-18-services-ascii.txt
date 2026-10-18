@@ -1,0 +1,39 @@
+calldiff diff HEAD -> working tree
+
++ serviceOf(context, node, visited)  packages/oxlint-plugin/src/service-instrumentation.ts:75
++ +- if (Array.some(visited, (previous) => previous === node))  packages/oxlint-plugin/src/service-instrumentation.ts:80
++    \- Option.none()  packages/oxlint-plugin/src/service-instrumentation.ts:80
++ +- pipe()  packages/oxlint-plugin/src/service-instrumentation.ts:82-87
++ +- referenceOf(context, node, visited)  packages/oxlint-plugin/src/service-instrumentation.ts:82
++ |  +- if (Array.some(visited, (previous) => previous === node))  packages/oxlint-plugin/src/native-reference.ts:51
++ |     \- Option.none()  packages/oxlint-plugin/src/native-reference.ts:51
++ |  +- if (node.type === "TSAsExpression" || node.type === "TSSatisfiesExpression" || node.type === "TSInstantiationExpression" || node.type === "ChainExpression")  packages/oxlint-plugin/src/native-reference.ts:53-58
++ |     \- referenceOf(context, node, visited)  packages/oxlint-plugin/src/native-reference.ts:59
++ |  +- if (node.type === "MemberExpression")  packages/oxlint-plugin/src/native-reference.ts:61
++ |     +- propertyName(key)  packages/oxlint-plugin/src/native-reference.ts:64
++ |     +- Option.none()  packages/oxlint-plugin/src/native-reference.ts:65
++ |     +- propertyName(key)  packages/oxlint-plugin/src/native-reference.ts:66
++ |     +- pipe()  packages/oxlint-plugin/src/native-reference.ts:67-69
++ |     +- Option.all()  packages/oxlint-plugin/src/native-reference.ts:67
++ |     +- referenceOf(context, node, visited)  packages/oxlint-plugin/src/native-reference.ts:67
++ |     \- Option.flatMap()  packages/oxlint-plugin/src/native-reference.ts:68
++ |  +- if (node.type !== "Identifier")  packages/oxlint-plugin/src/native-reference.ts:71
++ |     \- Option.none()  packages/oxlint-plugin/src/native-reference.ts:71
++ |  +- pipe()  packages/oxlint-plugin/src/native-reference.ts:72-125
++ |  +- variableInScope(scope, name)  packages/oxlint-plugin/src/native-reference.ts:72
++ |  +- getScope()  packages/oxlint-plugin/src/native-reference.ts:72
++ |  \- Option.flatMap()  packages/oxlint-plugin/src/native-reference.ts:73-124
++ +- Option.filter()  packages/oxlint-plugin/src/service-instrumentation.ts:83
++ +- Option.flatMap()  packages/oxlint-plugin/src/service-instrumentation.ts:84
++ +- Option.filter()  packages/oxlint-plugin/src/service-instrumentation.ts:85
++ +- Option.map()  packages/oxlint-plugin/src/service-instrumentation.ts:86
++ +- if (Option.isSome(imported))  packages/oxlint-plugin/src/service-instrumentation.ts:88
++ +- if (node.type !== "Identifier")  packages/oxlint-plugin/src/service-instrumentation.ts:89
++    \- Option.none()  packages/oxlint-plugin/src/service-instrumentation.ts:89
++ +- pipe()  packages/oxlint-plugin/src/service-instrumentation.ts:90-107
++ +- variableInScope(scope, name)  packages/oxlint-plugin/src/service-instrumentation.ts:90
++ |  +- pipe()  packages/oxlint-plugin/src/syntax.ts:11-17
++ |  +- Array.findFirst()  packages/oxlint-plugin/src/syntax.ts:11
++ |  \- Option.orElse()  packages/oxlint-plugin/src/syntax.ts:12-16
++ +- getScope()  packages/oxlint-plugin/src/service-instrumentation.ts:90
++ \- Option.flatMap()  packages/oxlint-plugin/src/service-instrumentation.ts:91-106

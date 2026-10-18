@@ -1,5 +1,15 @@
 # @commonplaces/oxlint-plugin
 
+## 0.4.0
+
+### Minor Changes
+
+- Add optional Effect convention, web and native TypeScript configuration groups,
+  with portable codec, runtime, HTTP-client and build-memo ownership checks.
+  Enable automatic service-operation tracing with canonical imported names, mixed
+  data/Stream contracts and validation that spans wrap returned operations.
+  Reject relative imports across workspace boundaries even outside source folders.
+
 ## 0.3.1
 
 ### Patch Changes

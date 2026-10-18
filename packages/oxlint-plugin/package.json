@@ -1,6 +1,6 @@
 {
   "name": "@commonplaces/oxlint-plugin",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Shared Oxlint rules for strict Effect TypeScript, Alchemy and repository code.",
   "license": "MIT",
   "author": "Cooper Corbett",
@@ -28,6 +28,14 @@
     "./effect": {
       "types": "./dist/effect.d.ts",
       "default": "./dist/effect.js"
+    },
+    "./conventions": {
+      "types": "./dist/conventions.d.ts",
+      "default": "./dist/conventions.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "default": "./dist/web.js"
     },
     "./alchemy": {
       "types": "./dist/alchemy.d.ts",
