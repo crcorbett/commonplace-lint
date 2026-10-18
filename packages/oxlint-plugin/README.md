@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-61 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+106 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. This package supports **Oxlint 1.80.0, 1.85.0 or 1.86.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.80.0; consuming projects may use any supported version.
@@ -35,7 +35,18 @@ checks native Alchemy settings and secret sources. Each group turns its checks
 on as errors. They do not depend on one another. Override individual rules in
 your own `rules` or `overrides` settings.
 
-The root export contains these three configurations. Individual plugins use
+The root also exports `conventions`, `web` and `typescript`. `conventions` enables
+strict Effect coding conventions; `web` adds React/TanStack, MDX and typography
+checks; `typescript` enables native type-aware safety checks and correctness
+errors. Run the latter with `oxlint --type-aware --deny-warnings .`. These groups
+contain no application paths. Codec and runtime permissions remain explicit
+project facts.
+
+`strict` composes all six groups for applications that use the complete stack:
+`defineConfig({ extends: [strict, projectPolicy] })`. It adds no project paths
+or source ignores. Keep exact ownership settings in the consuming project.
+
+The root exports these six groups and the `strict` composition. Individual plugins use
 the subpaths below. For example, a JSON configuration can enable one rule:
 
 ```json
@@ -47,8 +58,8 @@ the subpaths below. For example, a JSON configuration can enable one rule:
 
 ## Project settings
 
-Rules that refer to project files, services, schemas or routes are available
-but excluded from the groups. Configure them explicitly, for example:
+Rules that refer to project files, schemas or routes are available but excluded
+from the groups. Configure them explicitly, for example:
 
 ```ts
 import { defineConfig } from "oxlint";
@@ -86,8 +97,35 @@ export default defineConfig({
 ```
 
 Use repository-relative paths with `/` separators. Runtime execution is denied
-everywhere unless `allowedFiles` grants an entry file. The service tracing rule
-requires `serviceNames` and checks names such as `Effect.fn("Orders.create")`.
+everywhere unless `allowedFiles` grants an entry file. Service tracing is enabled
+by `effect` without a service-name inventory. It checks native local
+`Context.Service` constructors and imported capitalised service `.of` calls,
+plus supplied operations in native `Layer.mock` replacements,
+preserving canonical names through named imports, namespace imports and immutable
+aliases. Shadowed names cannot borrow import identity. Every explicit operation
+requires its exact `Effect.fn("Orders.create")` or `Effect.withSpan` name.
+Legacy `serviceNames` selection remains available for existing consumers.
+An empty selector is rejected.
+
+Local contract types identify checked data and Stream members; native Stream
+expressions also retain their role in imported mixed contracts. Opaque members
+fail closed rather than gaining a name-based exemption. Instrumentation must
+wrap the operation or its returned Effect; an unrelated nested span is
+insufficient. The rule examines syntax, not a cross-file TypeScript type graph;
+an imported capitalised non-service `.of` API may require a distinct API shape.
+Empty partial mocks contain no supplied operation to instrument. The rule does
+not infer contracts for arbitrary Layer factories or raw `Layer.succeed` data
+objects; retain typed composition and review those boundaries.
+
+For a canonical operation adapter that preserves an overloaded service API,
+`operationAdapters` can name its public `module`, exact source `file`, `exports`
+and canonical `operation`. The adapter owns the returned operation's span.
+Prove that guarantee directly against the real adapter, with an uninstrumented
+callback and observed current span. Only that operation and those imported
+exports gain this role; shadowed functions, neighbouring modules and other
+service operations still require their own spans. This is an explicit contract
+owner where cross-file type analysis is unavailable, not a general wrapper
+permission.
 Invalid settings stop linting. Each rule's exported `meta.schema` describes its
 accepted options; no marketplace plugin is needed to read or run them.
 
@@ -98,15 +136,42 @@ package subpaths; keep your existing rule settings.
 
 ## Rule exports
 
-| Package subpath     | Rule prefix         | Rules |
-| ------------------- | ------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`    |    29 |
-| `/effect`           | `effect/`           |     9 |
-| `/alchemy`          | `alchemy-secrets/`  |     3 |
-| `/bun`              | `bun/`              |     1 |
-| `/package`          | `package/`          |     3 |
-| `/anti-slop`        | `anti-slop/`        |    15 |
-| `/anti-slop-effect` | `anti-slop-effect/` |     1 |
+| Package subpath     | Rule prefix           | Rules |
+| ------------------- | --------------------- | ----: |
+| `/strict-effect`    | `strict-effect/`      |    29 |
+| `/effect`           | `effect/`             |     9 |
+| `/alchemy`          | `alchemy-secrets/`    |     3 |
+| `/bun`              | `bun/`                |     1 |
+| `/package`          | `package/`            |     3 |
+| `/anti-slop`        | `anti-slop/`          |    15 |
+| `/anti-slop-effect` | `anti-slop-effect/`   |     1 |
+| `/conventions`      | `effect-conventions/` |    33 |
+| `/web`              | `web/`                |    12 |
+
+### Explicit codec and runtime roles
+
+The three optional codec-placement checks in `/conventions` follow real Schema
+imports, named aliases, destructured exports and immutable aliases, respecting
+local shadowing. Add them through positive scopes that exclude exact ingress,
+egress or synchronous consumer owners. A filename ending in `.ingress.ts` or
+`.egress.ts` grants no permission on its own. `Schema.decodeTo` and `encodeTo`
+declarations remain transformations rather than codec execution.
+
+`effect-conventions/scoped-managed-runtime` requires acquisition and the
+matching runtime disposer through `Effect.acquireRelease`. For a host that owns
+an isolate/process lifetime and offers no termination callback, `hostLifetimes`
+may identify its exact top-level `const` by repository-relative `file` and
+`declaration`. Another declaration, nested construction or neighbouring file
+still fails. This role does not permit additional runtime execution files.
+Use the separate runtime execution owner rule as well.
+
+`browser-runtime-ownership` takes `runtimeOwners` and `registryOwners`.
+`native-http-client-ownership` takes `browserOwners` and `serverOwners`.
+`bounded-build-memo` takes exact `targets` with `file` and `declaration`.
+These are optional rules in `/conventions`; malformed allowances fail closed.
+The memo check requires immutable bounded includes and `lockfile: true`, and
+rejects excluded dependencies, opaque or overwritten settings and broad parent
+recursion outside `src`. There are no application path defaults.
 
 ## Development
 
@@ -179,7 +244,7 @@ integration checks and `bun run test` for the archive installation
 and public contract checks.
 
 Oxlint owns synchronous rule callbacks and reporting. Pure checks use immutable
-Effect collections. The two synchronous option decoders in `effect.ts` are
+Effect collections. The synchronous option decoders in `effect.ts` and `service-instrumentation.ts` are
 required by Oxlint's `create` callback and throw only for invalid configuration.
 The `syntax.ts` child adapter selects nodes from Oxlint's already parsed tree
 using its visitor keys; it is not a decoder for external JSON. Traversal cycle

@@ -52,6 +52,18 @@
     {
       "path": "docs/evidence/2026-10-17-npm-031.md",
       "owner": "dated npm 0.3.1 canonical archive, propagation, independent proof and GitHub release status"
+    },
+    {
+      "path": "docs/evidence/2026-10-18-consolidation-candidate.md",
+      "owner": "dated 0.4.0 local candidate qualification and release status"
+    },
+    {
+      "path": "docs/evidence/2026-10-18-services-ascii.txt",
+      "owner": "dated native Calldiff service resolver output"
+    },
+    {
+      "path": "docs/evidence/2026-10-18-aliases-ascii.txt",
+      "owner": "dated native Calldiff import resolver output"
     }
   ]
 }

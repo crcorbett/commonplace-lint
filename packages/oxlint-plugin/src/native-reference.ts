@@ -26,8 +26,15 @@ export const constant = (variable: Variable): Option.Option<ESTree.VariableDecla
 
 const member = (reference: Reference, name: string): Option.Option<Reference> => {
   if (Option.isSome(reference.name)) return Option.none();
+  if (reference.module === "@effect/atom-react" && name === "Atom") {
+    return Option.some({ module: "effect/reactivity/Atom", name: Option.none() });
+  }
   return reference.module === "alchemy" ||
     reference.module === "effect" ||
+    Array.contains(
+      ["effect/reactivity", "effect/http", "effect/http-api", "effect/rpc", "effect/unstable/http"],
+      reference.module,
+    ) ||
     (reference.module === "effect/process" &&
       (name === "ChildProcess" || name === "ChildProcessSpawner"))
     ? Option.some({ module: `${reference.module}/${name}`, name: Option.none() })
@@ -36,14 +43,19 @@ const member = (reference: Reference, name: string): Option.Option<Reference> =>
 
 // Only real imports and immutable local aliases count. The nearest declaration
 // prevents a shadowed parameter from borrowing an outer import's identity.
-const referenceOf = (
+export const referenceOf = (
   context: Context,
   node: ESTree.Node,
   visited: readonly ESTree.Node[] = [],
 ): Option.Option<Reference> => {
   if (Array.some(visited, (previous) => previous === node)) return Option.none();
   const next = [...visited, node];
-  if (node.type === "TSAsExpression" || node.type === "TSSatisfiesExpression") {
+  if (
+    node.type === "TSAsExpression" ||
+    node.type === "TSSatisfiesExpression" ||
+    node.type === "TSInstantiationExpression" ||
+    node.type === "ChainExpression"
+  ) {
     return referenceOf(context, node.expression, next);
   }
   if (node.type === "MemberExpression") {
@@ -67,13 +79,6 @@ const referenceOf = (
             definition.parent.importKind !== "type"
           ) {
             const module = definition.parent.source.value;
-            if (
-              module !== "alchemy" &&
-              !module.startsWith("alchemy/") &&
-              module !== "effect" &&
-              !module.startsWith("effect/")
-            )
-              return Option.none();
             const reference = { module, name: Option.none<string>() };
             if (definition.node.type === "ImportNamespaceSpecifier") return Option.some(reference);
             if (

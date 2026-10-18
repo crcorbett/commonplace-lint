@@ -3264,13 +3264,15 @@ const SchemaOwner = Schema.Struct({
 type SchemaOwner = typeof SchemaOwner.Type;
 const SharedSchemaOptions = Schema.Struct({
   owners: nonEmpty(SchemaOwner),
-  fields: Schema.Array(
-    Schema.Struct({
-      file: PolicyFile,
-      declaration: PolicyName,
-      field: PolicyName,
-      schema: PolicyName,
-    }),
+  fields: Schema.optionalKey(
+    Schema.Array(
+      Schema.Struct({
+        file: PolicyFile,
+        declaration: PolicyName,
+        field: PolicyName,
+        schema: PolicyName,
+      }),
+    ),
   ),
 });
 const ConstantMapOptions = Schema.Struct({
@@ -3463,13 +3465,16 @@ const sharedSchemaOwner = defineRule({
   meta: {
     type: "problem",
     schema: [
-      jsonObject({
-        owners: jsonList({ file: jsonFile, module: jsonText, names: jsonNames }, 1),
-        fields: jsonList(
-          { file: jsonFile, declaration: jsonText, field: jsonText, schema: jsonText },
-          0,
-        ),
-      }),
+      {
+        ...jsonObject({
+          owners: jsonList({ file: jsonFile, module: jsonText, names: jsonNames }, 1),
+          fields: jsonList(
+            { file: jsonFile, declaration: jsonText, field: jsonText, schema: jsonText },
+            0,
+          ),
+        }),
+        required: ["owners"],
+      },
     ],
     messages: {
       options: "Configure the shared schema owners and the fields that must reuse them.",
@@ -3482,7 +3487,10 @@ const sharedSchemaOwner = defineRule({
   create(context) {
     const options = ruleOptions(SharedSchemaOptions)(context);
     const owners = Option.match(options, { onNone: () => [], onSome: (value) => value.owners });
-    const fields = Option.match(options, { onNone: () => [], onSome: (value) => value.fields });
+    const fields = Option.match(options, {
+      onNone: () => [],
+      onSome: (value) => value.fields ?? [],
+    });
     // A local `const` may alias the owner's export of the same name.
     const importedAlias = (node: ESTree.Node, name: string) =>
       scopedVariable(context.sourceCode.getScope(node), name).pipe(

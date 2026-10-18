@@ -1,7 +1,8 @@
+import { requireServiceOperationInstrumentation } from "./service-instrumentation.js";
 import { defineRule } from "@oxlint/plugins";
-import type { Context, ESTree } from "@oxlint/plugins";
-import { Array, Option, Predicate, Schema } from "effect";
-import { childNodes, propertyName, variableInScope } from "./syntax.js";
+import type { ESTree } from "@oxlint/plugins";
+import { Array, Option, Schema } from "effect";
+import { propertyName } from "./syntax.js";
 
 const memberExpressionName = (node: ESTree.Node): Option.Option<string> => {
   if (node?.type !== "MemberExpression" || node.object?.type !== "Identifier") {
@@ -251,7 +252,6 @@ const noManualTag = defineRule({
 });
 
 const RuntimeOptions = Schema.Struct({ allowedFiles: Schema.Array(Schema.String) });
-const ServiceOptions = Schema.Struct({ serviceNames: Schema.Array(Schema.String) });
 
 const noRuntimeExecutionOutsideMain = defineRule({
   meta: {
@@ -293,115 +293,6 @@ const noRuntimeExecutionOutsideMain = defineRule({
         );
         if (isRunner && !isMain)
           context.report({ messageId: "noRuntimeExecutionOutsideMain", node: node.callee });
-      },
-    };
-  },
-});
-
-const instrumentationName = (node: ESTree.Node): Option.Option<string> => {
-  if (
-    node.type !== "CallExpression" ||
-    node.callee.type !== "MemberExpression" ||
-    node.callee.object.type !== "Identifier" ||
-    node.callee.object.name !== "Effect" ||
-    !Option.exists(propertyName(node.callee.property), (name) =>
-      Array.contains(["fn", "withSpan"], name),
-    )
-  )
-    return Option.none();
-  return Array.head(node.arguments).pipe(
-    Option.flatMap((argument) =>
-      argument.type === "Literal" && Predicate.isString(argument.value)
-        ? Option.some(argument.value)
-        : Option.none(),
-    ),
-  );
-};
-
-const containsInstrumentation = (context: Context, node: ESTree.Node, name: string): boolean =>
-  Option.contains(instrumentationName(node), name) ||
-  Array.some(childNodes(context, node), (child) => containsInstrumentation(context, child, name));
-
-const operationValue = (context: Context, node: ESTree.Node): Option.Option<ESTree.Node> => {
-  if (node.type !== "Identifier") return Option.some(node);
-  return variableInScope(context.sourceCode.getScope(node), node.name).pipe(
-    Option.flatMap((variable) => Array.head(variable.defs)),
-    Option.flatMap((definition) =>
-      definition.node.type === "VariableDeclarator"
-        ? Option.fromNullishOr(definition.node.init)
-        : Option.none(),
-    ),
-  );
-};
-
-const requireServiceOperationInstrumentation = defineRule({
-  meta: {
-    type: "problem",
-    schema: [
-      {
-        type: "object",
-        properties: { serviceNames: { type: "array", items: { type: "string", minLength: 1 } } },
-        required: ["serviceNames"],
-        additionalProperties: false,
-      },
-    ],
-    docs: {
-      description: "Require exact tracing names on configured public Effect service operations.",
-    },
-    messages: {
-      missingInstrumentation:
-        "Instrument {{operation}} with Effect.fn or Effect.withSpan using that exact name.",
-      unsupportedOperation:
-        "Declare public Effect service operations as named object properties so tracing can be checked.",
-    },
-  },
-  create(context) {
-    // Oxlint requires a synchronous create callback; invalid options stop linting.
-    const options = Schema.decodeUnknownSync(ServiceOptions)(
-      Option.getOrUndefined(Array.head(context.options)),
-    );
-    return {
-      CallExpression(node) {
-        if (
-          node.callee.type !== "MemberExpression" ||
-          node.callee.object.type !== "Identifier" ||
-          !Array.contains(options.serviceNames, node.callee.object.name) ||
-          !Option.contains(propertyName(node.callee.property), "of")
-        )
-          return;
-        const service = node.callee.object.name;
-        const operations = Array.head(node.arguments);
-        Option.match(operations, {
-          onNone: () => {},
-          onSome: (argument) => {
-            if (argument.type !== "ObjectExpression") return;
-            Array.forEach(argument.properties, (operation) => {
-              if (operation.type !== "Property") {
-                context.report({ messageId: "unsupportedOperation", node: operation });
-                return;
-              }
-              Option.match(propertyName(operation.key), {
-                onNone: () => {
-                  context.report({ messageId: "unsupportedOperation", node: operation });
-                },
-                onSome: (name) => {
-                  const fullName = `${service}.${name}`;
-                  if (
-                    !Option.exists(operationValue(context, operation.value), (value) =>
-                      containsInstrumentation(context, value, fullName),
-                    )
-                  ) {
-                    context.report({
-                      messageId: "missingInstrumentation",
-                      data: { operation: fullName },
-                      node: operation,
-                    });
-                  }
-                },
-              });
-            });
-          },
-        });
       },
     };
   },

@@ -1,0 +1,36 @@
+calldiff diff HEAD -> working tree
+
+  referenceOf(context, node, visited)  packages/oxlint-plugin/src/native-reference.ts:46
+  +- if (Array.some(visited, (previous) => previous === node))  packages/oxlint-plugin/src/native-reference.ts:51
+     \- Option.none()  packages/oxlint-plugin/src/native-reference.ts:51
+- +- if (node.type === "TSAsExpression" || node.type === "TSSatisfiesExpression")  packages/oxlint-plugin/src/native-reference.ts:46
+-    \- referenceOf(context, node, visited) <->  packages/oxlint-plugin/src/native-reference.ts:47
++ +- if (node.type === "TSAsExpression" || node.type === "TSSatisfiesExpression" || node.type === "TSInstantiationExpression" || node.type === "ChainExpression")  packages/oxlint-plugin/src/native-reference.ts:53-58
++    \- referenceOf(context, node, visited) <->  packages/oxlint-plugin/src/native-reference.ts:59
+  +- if (node.type === "MemberExpression")  packages/oxlint-plugin/src/native-reference.ts:61
+     +- propertyName(key)  packages/oxlint-plugin/src/native-reference.ts:64
+     |  +- if (key.type === "Identifier")  packages/oxlint-plugin/src/strict-effect.ts:618
+     |     \- Option.some()  packages/oxlint-plugin/src/strict-effect.ts:618
+     |  +- if (key.type === "Literal" && Predicate.isString(key.value))  packages/oxlint-plugin/src/strict-effect.ts:619
+     |     \- Option.some()  packages/oxlint-plugin/src/strict-effect.ts:619
+     |  \- Option.none()  packages/oxlint-plugin/src/strict-effect.ts:620
+     +- Option.none()  packages/oxlint-plugin/src/native-reference.ts:65
+     +- propertyName(key)  packages/oxlint-plugin/src/native-reference.ts:66
+     |  +- if (key.type === "Identifier")  packages/oxlint-plugin/src/strict-effect.ts:618
+     |     \- Option.some()  packages/oxlint-plugin/src/strict-effect.ts:618
+     |  +- if (key.type === "Literal" && Predicate.isString(key.value))  packages/oxlint-plugin/src/strict-effect.ts:619
+     |     \- Option.some()  packages/oxlint-plugin/src/strict-effect.ts:619
+     |  \- Option.none()  packages/oxlint-plugin/src/strict-effect.ts:620
+     +- pipe()  packages/oxlint-plugin/src/native-reference.ts:67-69
+     +- Option.all()  packages/oxlint-plugin/src/native-reference.ts:67
+     +- referenceOf(context, node, visited) <->  packages/oxlint-plugin/src/native-reference.ts:67
+     \- Option.flatMap()  packages/oxlint-plugin/src/native-reference.ts:68
+  +- if (node.type !== "Identifier")  packages/oxlint-plugin/src/native-reference.ts:71
+     \- Option.none()  packages/oxlint-plugin/src/native-reference.ts:71
+  +- pipe()  packages/oxlint-plugin/src/native-reference.ts:72-125
+  +- variableInScope(scope, name)  packages/oxlint-plugin/src/native-reference.ts:72
+  |  +- pipe()  packages/oxlint-plugin/src/syntax.ts:11-17
+  |  +- Array.findFirst()  packages/oxlint-plugin/src/syntax.ts:11
+  |  \- Option.orElse()  packages/oxlint-plugin/src/syntax.ts:12-16
+  +- getScope()  packages/oxlint-plugin/src/native-reference.ts:72
+  \- Option.flatMap()  packages/oxlint-plugin/src/native-reference.ts:73-124

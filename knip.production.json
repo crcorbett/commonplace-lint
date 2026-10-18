@@ -14,5 +14,5 @@
       ]
     }
   },
-  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"]
+  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts", "tools/oxlint/conventions.cases.ts"]
 }

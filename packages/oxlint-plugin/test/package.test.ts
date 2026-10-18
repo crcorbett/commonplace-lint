@@ -126,7 +126,9 @@ Array.forEach(["1.80.0", "1.85.0", "1.86.0"], (version) =>
           `${directory}/inspect.mjs`,
           `
 import assert from "node:assert/strict";
-import { general, effect, alchemy } from "@commonplaces/oxlint-plugin";
+import { general, effect, alchemy, conventions, web, typescript, strict as strictConfig } from "@commonplaces/oxlint-plugin";
+import conventionsPlugin from "@commonplaces/oxlint-plugin/conventions";
+import webPlugin from "@commonplaces/oxlint-plugin/web";
 import strict from "@commonplaces/oxlint-plugin/strict-effect";
 import local from "@commonplaces/oxlint-plugin/effect";
 import secrets from "@commonplaces/oxlint-plugin/alchemy";
@@ -134,10 +136,10 @@ import bun from "@commonplaces/oxlint-plugin/bun";
 import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
-const plugins = [strict, local, secrets, bun, packages, style, styleEffect];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [29, 9, 3, 1, 3, 15, 1]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 61);
-for (const group of [general, effect, alchemy]) {
+const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [29, 9, 3, 1, 3, 15, 1, 33, 12]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 106);
+for (const group of [general, effect, alchemy, conventions, web]) {
   for (const id of Object.keys(group.rules)) {
     const slash = id.indexOf("/");
     const plugin = plugins.find(plugin => plugin.meta.name === id.slice(0, slash));
@@ -147,7 +149,9 @@ for (const group of [general, effect, alchemy]) {
 for (const id of ["runtime-file-convention", "module-ownership", "shared-schema-owner", "checked-constant-map", "no-persisted-id-normalisation"]) {
   assert.equal(effect.rules["strict-effect/" + id], undefined);
 }
-assert.equal(effect.rules["effect/require-service-operation-instrumentation"], undefined);
+assert.equal(effect.rules["effect/require-service-operation-instrumentation"], "error");
+assert.equal(typescript.rules["typescript/no-unsafe-assignment"], "error");
+assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, web, typescript]);
 `,
         );
         yield* success(directory, "node", ["inspect.mjs"]);
@@ -190,6 +194,61 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
         const validReport = yield* Schema.decodeEffect(Schema.fromJsonString(Report))(valid.stdout);
         expect(validReport.number_of_files).toBe(1);
         expect(validReport.diagnostics).toEqual([]);
+        yield* fs.writeFileString(
+          `${directory}/service-invalid.ts`,
+          'import { Library as Alias } from "./service"; import { Effect } from "effect"; export const client = Alias.of({ read: Effect.void });',
+        );
+        yield* fs.writeFileString(
+          `${directory}/service-valid.ts`,
+          'import { Library as Alias } from "./service"; import { Effect } from "effect"; export const client = Alias.of({ read: Effect.void.pipe(Effect.withSpan("Library.read")) });',
+        );
+        const serviceBad = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
+          "--format",
+          "json",
+          "service-invalid.ts",
+        ]);
+        expect(serviceBad.exitCode).toBe(1);
+        const serviceReport = yield* Schema.decodeEffect(Schema.fromJsonString(Report))(
+          serviceBad.stdout,
+        );
+        expect(Array.map(serviceReport.diagnostics, ({ code }) => code)).toContain(
+          "effect(require-service-operation-instrumentation)",
+        );
+        yield* success(directory, `${directory}/node_modules/.bin/oxlint`, ["service-valid.ts"]);
+        yield* fs.writeFileString(
+          `${directory}/conventions.config.ts`,
+          'import { defineConfig } from "oxlint"; import { conventions, web } from "@commonplaces/oxlint-plugin"; export default defineConfig({ extends: [conventions, web] });',
+        );
+        yield* fs.writeFileString(
+          `${directory}/conventions-invalid.tsx`,
+          'export interface Client { readonly useClient: <T>(f: Callback<T>) => T; } export const view = <div className="space-x-4" />;',
+        );
+        yield* fs.writeFileString(
+          `${directory}/conventions-valid.tsx`,
+          'export interface Client { readonly read: Read; } export const view = <div className="flex gap-4" />;',
+        );
+        const conventionBad = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
+          "--config",
+          "conventions.config.ts",
+          "--format",
+          "json",
+          "conventions-invalid.tsx",
+        ]);
+        expect(conventionBad.exitCode).toBe(1);
+        const conventionReport = yield* Schema.decodeEffect(Schema.fromJsonString(Report))(
+          conventionBad.stdout,
+        );
+        expect(Array.map(conventionReport.diagnostics, ({ code }) => code)).toEqual(
+          expect.arrayContaining([
+            "effect-conventions(no-generic-client-escape)",
+            "web(gap-layout)",
+          ]),
+        );
+        yield* success(directory, `${directory}/node_modules/.bin/oxlint`, [
+          "--config",
+          "conventions.config.ts",
+          "conventions-valid.tsx",
+        ]);
         // Real host syntax has parent/scope cycles. Structural equality on visited
         // nodes previously spent minutes traversing this graph instead of linting.
         const largeSource = yield* fs.readFileString(

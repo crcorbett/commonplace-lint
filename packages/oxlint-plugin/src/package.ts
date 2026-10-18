@@ -26,7 +26,7 @@ const resolveRelative = (fileName: string, specifier: string): string =>
   );
 
 const workspaceSourceRoot = (fileName: string): Option.Option<string> =>
-  Option.fromNullishOr(fileName.match(/\/(?:apps|packages)\/(?:[^/]+\/)+?src(?:\/|$)/u)).pipe(
+  Option.fromNullishOr(fileName.match(/\/(?:apps|packages|content)\/[^/]+(?:\/|$)/u)).pipe(
     Option.flatMap(Array.head),
     Option.map((root) => root.replace(/\/$/u, "")),
   );
