@@ -863,6 +863,50 @@ const layerExpression = (
     if (Array.isReadonlyArrayEmpty(expression.arguments)) {
       return layerExpression(context, expression.callee.object, next);
     }
+    // Completed Match.value pipelines return their branch values, including
+    // Layers. Inline native callbacks remain allowed; an owned factory does not.
+    const completesMatch = Array.last(expression.arguments).pipe(
+      Option.exists((argument) =>
+        scopedEffectReference(
+          context,
+          argument.type === "CallExpression" ? argument.callee : argument,
+        ).pipe(
+          Option.exists(
+            (reference) =>
+              isExport(reference, "effect/Match", "exhaustive") ||
+              isExport(reference, "effect/Match", "orElse"),
+          ),
+        ),
+      ),
+    );
+    const valueMatch =
+      expression.callee.object.type === "CallExpression" &&
+      scopedEffectReference(context, expression.callee.object.callee).pipe(
+        Option.exists((reference) => isExport(reference, "effect/Match", "value")),
+      );
+    const branchReturnsLayer = (argument: ESTree.Argument) =>
+      argument.type === "CallExpression" &&
+      scopedEffectReference(context, argument.callee).pipe(
+        Option.exists((reference) => reference.module === "effect/Match"),
+      ) &&
+      Array.some<ESTree.Argument>(
+        (callback) =>
+          (callback.type === "ArrowFunctionExpression" || callback.type === "FunctionExpression") &&
+          Option.fromNullishOr(callback.body).pipe(
+            Option.exists((body) =>
+              body.type === "BlockStatement"
+                ? returnsLayer(context, body)
+                : layerExpression(context, body, next),
+            ),
+          ),
+      )(argument.arguments);
+    if (
+      valueMatch &&
+      completesMatch &&
+      Array.some<ESTree.Argument>(branchReturnsLayer)(expression.arguments)
+    ) {
+      return true;
+    }
     return transforms(expression.arguments);
   }
   return false;

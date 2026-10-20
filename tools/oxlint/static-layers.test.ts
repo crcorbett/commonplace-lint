@@ -86,6 +86,7 @@ import * as Effect from "effect/Effect";
 import * as Function from "effect/Function";
 import { foreign } from "./foreign";
 import * as HttpRouter from "effect/http/HttpRouter";
+import * as Match from "effect/Match";
 
 class Fixture extends Context.Service<Fixture, { readonly value: number }>()("Fixture") {}
 const namespace = Layer;
@@ -132,12 +133,26 @@ export const discarded = () => Layer.orDie(staticLayer);
 export const traced = () => Layer.span("fixture");
 export const opaqueCallback = foreign(() => Layer.empty);
 export const fakeServiceCallback = foreign({ api, httpClient: () => Layer.empty });
+export const matched = (enabled: boolean) =>
+  Match.value(enabled).pipe(
+    Match.when(true, () => staticLayer),
+    Match.orElse(() => Layer.empty),
+  );
+export const exhaustive = (mode: { readonly _tag: "on" } | { readonly _tag: "off" }) =>
+  Match.value(mode).pipe(
+    Match.tag("on", () => {
+      return staticLayer;
+    }),
+    Match.tag("off", () => Layer.empty),
+    Match.exhaustive,
+  );
 `;
 const valid = `import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Function from "effect/Function";
 import * as Option from "effect/Option";
+import * as Match from "effect/Match";
 
 class Fixture extends Context.Service<Fixture, { readonly value: number }>()("Fixture") {}
 export const plain = Layer.succeed(Fixture, { value: 1 });
@@ -154,6 +169,21 @@ export const branches = Layer.unwrap(
     }),
   ),
 );
+export const matchedComposition = Layer.unwrap(
+  Effect.map(Effect.succeed(true), (enabled) =>
+    Match.value(enabled).pipe(
+      Match.when(true, () => plain),
+      Match.orElse(() => Layer.empty),
+    ),
+  ),
+);
+export const ordinaryMatch = (enabled: boolean) =>
+  Match.value(enabled).pipe(
+    Match.when(true, () => "enabled"),
+    Match.orElse(() => "disabled"),
+  );
+export const incompleteMatch = (enabled: boolean) =>
+  Match.value(enabled).pipe(Match.when(true, () => plain));
 export const provided = plain.pipe(Layer.provide(Layer.empty));
 export const functional = Function.pipe(plain, Layer.provide(Layer.empty));
 export const mocked = Layer.mock(Fixture, { value: 2 });
@@ -186,7 +216,7 @@ it.effect(
           const result = yield* lint(invalid, target);
           expect(result.exitCode).not.toBe(0);
           expect(result.report.number_of_files).toBe(1);
-          expect(result.report.diagnostics).toHaveLength(26);
+          expect(result.report.diagnostics).toHaveLength(28);
           expect(
             Array.every<(typeof Report.Type)["diagnostics"][number]>(
               (diagnostic) => diagnostic.code === "strict-effect(static-layers)",
