@@ -1,5 +1,11 @@
 # @commonplaces/oxlint-plugin
 
+## 0.4.1
+
+### Patch Changes
+
+- `strict-effect/static-layers` now reports owned factories that return a Layer from a completed `Match.value` pipeline (`Match.orElse` or `Match.exhaustive`). Inline Match callbacks passed to native composition remain allowed.
+
 ## 0.4.0
 
 ### Minor Changes
