@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-## Unreleased
+## 0.5.0
 
 ### Minor Changes
 

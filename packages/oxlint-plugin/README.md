@@ -8,14 +8,14 @@ Both exact versions are checked with independently installed archives. ESLint is
 
 ## Install
 
-Install the latest npm release and save its exact version:
+Install version 0.5.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.89.0
 ```
 
-The style preset and these host requirements are pending publication. Published
-0.4.0 keeps its earlier host list; adoption follows a separately authorised release.
+Version 0.5.0 adds the optional style preset and the host requirements above.
+Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
 archives remain separate distribution artefacts; a GitHub release does not publish

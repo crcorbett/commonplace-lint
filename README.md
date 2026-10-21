@@ -6,14 +6,14 @@
 
 ## Install
 
-Install the latest published npm version and save the exact resolved version:
+Install version 0.5.0 and save the exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.89.0
 ```
 
-The style preset and these host requirements are pending publication. Published
-0.4.0 keeps its earlier host list; adoption follows a separately authorised release.
+Version 0.5.0 adds the optional style preset and the host requirements above.
+Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
 
 The qualified npm `latest` is 0.4.0 with 106 rules and the complete `strict`
 profile. See [the publication record](docs/evidence/2026-10-18-npm-040.md)
