@@ -15,8 +15,8 @@ npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.8
 Version 0.5.0 adds the optional style preset and the host requirements above.
 Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
 
-The qualified npm `latest` is 0.4.0 with 106 rules and the complete `strict`
-profile. See [the publication record](docs/evidence/2026-10-18-npm-040.md)
+The qualified npm `latest` is 0.5.0 with 106 rules, the complete `strict`
+profile and the separate optional `style` preset. See [the publication record](docs/evidence/2026-10-21-npm-050.md)
 for the reviewed source, canonical registry archive, provenance and independent
 checks. npm installation does not depend on a GitHub archive mirror.
 

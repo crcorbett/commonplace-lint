@@ -28,3 +28,5 @@ checked at a particular commit; they do not replace the current runbook.
 - [Optional style candidate](evidence/2026-10-21-style-candidate.md) — 21 October 2026; version comparison, archive checks and consumer findings.
 
 - [Latest dependencies and style candidate](evidence/2026-10-21-latest-dependencies.md) — 21 October 2026; replaces the earlier style trial after upgrading every direct package.
+
+- [npm 0.5.0 release](evidence/2026-10-21-npm-050.md) — 21 October 2026; trusted publication, matching archive bytes, public host tests, signatures and GitHub release.

@@ -4,6 +4,9 @@ This replaces the earlier 7.12.0 style candidate. It records local qualification
 of the owner's request to use the latest of every package. No publication or
 consumer adoption is authorised by these checks.
 
+Historical candidate snapshot. See the [0.5.0 release record](2026-10-21-npm-050.md)
+for the later authorised merge, final archive and verified public publication.
+
 ## Versions
 
 Checked npm's `latest` tags on 21 October 2026, then pinned every direct external
