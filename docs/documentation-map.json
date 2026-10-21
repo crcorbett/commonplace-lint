@@ -76,6 +76,10 @@
     {
       "path": "docs/evidence/2026-10-21-latest-dependencies.md",
       "owner": "dated latest dependency and style candidate qualification"
+    },
+    {
+      "path": "docs/evidence/2026-10-21-npm-050.md",
+      "owner": "dated npm 0.5.0 archive, trusted publishing, public registry qualification and GitHub release evidence"
     }
   ]
 }
