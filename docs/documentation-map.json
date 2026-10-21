@@ -68,6 +68,14 @@
     {
       "path": "docs/evidence/2026-10-18-npm-040.md",
       "owner": "dated npm 0.4.0 publication, canonical archive equality, provenance and independent public registry qualification"
+    },
+    {
+      "path": "docs/evidence/2026-10-21-style-candidate.md",
+      "owner": "dated optional style candidate and consumer check evidence"
+    },
+    {
+      "path": "docs/evidence/2026-10-21-latest-dependencies.md",
+      "owner": "dated latest dependency and style candidate qualification"
     }
   ]
 }

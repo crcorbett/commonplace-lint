@@ -10,9 +10,15 @@
         "src/bun.ts!",
         "src/package.ts!",
         "src/anti-slop/index.ts!",
-        "src/anti-slop/effect/index.ts!"
+        "src/anti-slop/effect/index.ts!",
+        "src/style.ts!"
       ]
     }
   },
-  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts", "tools/oxlint/conventions.cases.ts"]
+  "ignoreFiles": [
+    "tools/oxlint/fixtures/**/*.ts",
+    "tools/oxlint/conventions.cases.ts",
+    "packages/oxlint-plugin/test/**/*.ts"
+  ],
+  "ignoreDependencies": ["@effect/language-service"]
 }

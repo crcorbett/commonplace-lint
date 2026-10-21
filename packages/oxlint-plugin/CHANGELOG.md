@@ -1,5 +1,18 @@
 # @commonplaces/oxlint-plugin
 
+## 0.5.0
+
+### Minor Changes
+
+- Add a separate optional `style` preset using Ultracite 8.0.1 core, React and
+  Vitest, with eleven shared Site/Common Practice overrides. Extend
+  `[style, strict, project]` to retain strict safety checks. Keep strict unchanged
+  and preserve strict correctness settings through documented configuration adjustments.
+- Update all direct dependencies to their latest releases. Use Oxlint and its SDK
+  1.89.0, Effect linting 0.55.0, Effect 4.0.5, Oxfmt 0.74.0 and Bun 1.4.3.
+  Qualify Oxlint 1.86.0 and 1.89.0; retire 1.80.0 and 1.85.0 because Ultracite 8
+  requires a newer host.
+
 ## 0.4.1
 
 ### Patch Changes

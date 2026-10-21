@@ -3,7 +3,27 @@
   "compilerOptions": {
     "composite": true,
     "rootDir": ".",
-    "tsBuildInfoFile": "../../node_modules/.cache/typescript/oxlint-plugin.tsbuildinfo"
+    "tsBuildInfoFile": "../../node_modules/.cache/typescript/oxlint-plugin.tsbuildinfo",
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnostics": false,
+        "overrides": [
+          {
+            "include": ["test/**/*.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-node/NodeServices#layer",
+                "@effect/vitest#it",
+                "effect/FileSystem#FileSystem",
+                "effect/process/ChildProcess#make",
+                "effect/process/ChildProcessSpawner#ChildProcessSpawner"
+              ]
+            }
+          }
+        ]
+      }
+    ]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }

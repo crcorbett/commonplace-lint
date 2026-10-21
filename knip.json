@@ -11,9 +11,11 @@
         "src/package.ts!",
         "src/anti-slop/index.ts!",
         "src/anti-slop/effect/index.ts!",
-        "test/**/*.test.ts"
+        "test/**/*.test.ts",
+        "src/style.ts!"
       ]
     }
   },
-  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"]
+  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"],
+  "ignoreDependencies": ["@effect/language-service"]
 }

@@ -17,7 +17,7 @@ remains available for an explicitly authorised archive release.
 2. Run `bun install --frozen-lockfile`, `bun run test` and
    `bun run verification`. Review the diff, commit, open a pull request and
    merge with normal permissions. Do not bypass required checks.
-3. Check out the exact merge commit in a clean worktree. Use Bun 1.4.0 and a
+3. Check out the exact merge commit in a clean worktree. Use Bun 1.4.3 and a
    supported Node version. Repeat the frozen install, tests and verification,
    then run `bun run pack`. Inspect the archive's files and package metadata.
 4. With explicit release authority, tag that checked commit and release its
@@ -79,8 +79,8 @@ before retrying any publication.
    publication validates it. A local publication does not prove this path.
    Use npm's [trusted publisher instructions](https://docs.npmjs.com/trusted-publishers/).
 6. For later authorised npm releases, use the npm-first procedure below. The
-   existing **Publish Oxlint package** workflow uses Node 24, npm 11.13.0,
-   Bun 1.4.0 and a short-lived GitHub identity. No stored npm token is needed.
+   existing **Publish Oxlint package** workflow uses Node 24, npm 12.2.0,
+   Bun 1.4.3 and a short-lived GitHub identity. No stored npm token is needed.
 
 Alchemy uses the same general release pattern: GitHub Actions runs the package
 manager. See its [release workflow](https://github.com/alchemy-run/alchemy/blob/9e3c0584342d67b24a4215f931047aabd230327b/.github/workflows/release.yml).

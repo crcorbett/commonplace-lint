@@ -1,18 +1,21 @@
 # @commonplaces/oxlint-plugin
 
 106 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. This package supports **Oxlint 1.80.0, 1.85.0 or 1.86.0** and **Node 22.14 or newer**.
+checks. This package supports **Oxlint 1.86.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
-the rule tests. The development tools use 1.80.0; consuming projects may use any supported version.
-All three exact versions are checked with independently installed archives. ESLint is not a supported host.
+the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
+Both exact versions are checked with independently installed archives. ESLint is not a supported host.
 
 ## Install
 
-Install the latest npm release and save its exact version:
+Install version 0.5.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.89.0
 ```
+
+Version 0.5.0 adds the optional style preset and the host requirements above.
+Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
 archives remain separate distribution artefacts; a GitHub release does not publish
@@ -46,7 +49,7 @@ project facts.
 `defineConfig({ extends: [strict, projectPolicy] })`. It adds no project paths
 or source ignores. Keep exact ownership settings in the consuming project.
 
-The root exports these six groups and the `strict` composition. Individual plugins use
+The root exports these six groups, the optional `style` preset and the `strict` composition. Individual plugins use
 the subpaths below. For example, a JSON configuration can enable one rule:
 
 ```json
@@ -55,6 +58,93 @@ the subpaths below. For example, a JSON configuration can enable one rule:
   "rules": { "strict-effect/static-layers": "error" }
 }
 ```
+
+## Optional style preset
+
+Add `style` before `strict`, then keep the project's own policy last:
+
+```ts
+import { style, strict } from "@commonplaces/oxlint-plugin";
+import { defineConfig } from "oxlint";
+import project from "./tools/oxlint/project.config.ts";
+
+export default defineConfig({ extends: [style, strict, project] });
+```
+
+Run `oxlint --type-aware --deny-warnings .`. `style` also works alone and is
+available as the default export of `@commonplaces/oxlint-plugin/style`.
+It never imports or extends `strict`; `strict` still contains only its original
+six groups. Adding this release without selecting `style` leaves strict checks
+unchanged. This preset includes more than formatting preferences: Ultracite
+also supplies accessibility, test and correctness checks, browser globals,
+shared ignores and test-file overrides. Its ignores can reduce which files are
+checked; keep the project's own file policy explicit.
+
+Ultracite **8.0.1** is an exact regular dependency, selected at the owner's
+request to use the latest releases. It requires no separate consumer install. A peer would
+make consumers choose and install a second package, and could make imports of
+the root package fail when it is missing. The dependency also installs
+Ultracite's CLI dependencies; only the three Oxlint configuration modules run
+when importing this preset. No Ultracite CLI, formatter or Effect runtime runs.
+
+### Shared overrides
+
+These eleven rules are off in both historical root configurations: Common
+Practice at `3b6beef^` and Site at `dda3820`. File-specific permissions and
+size limits remain in each consumer's project policy.
+
+| Rule set to `off`                     | Reason                                                                                                                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `unicorn/no-array-for-each`           | Allow Effect's immutable `Array.forEach`; strict collection checks cover native mutation.                                        |
+| `unicorn/no-array-sort`               | Allow Effect's immutable `Array.sort`; strict collection checks cover native mutation.                                           |
+| `unicorn/throw-new-error`             | Allow the `Schema.TaggedError` factory; `strict-effect/error-constructor-new` checks error construction when strict is selected. |
+| `no-redeclare`                        | Allow TypeScript overloads and merged declarations.                                                                              |
+| `react/function-component-definition` | Allow the project's existing component declaration forms.                                                                        |
+| `sort-keys`                           | Keep related object fields in meaningful order.                                                                                  |
+| `func-names`                          | Allow unnamed library callbacks and Effect generators.                                                                           |
+| `func-style`                          | Allow function declarations and functions stored in constants.                                                                   |
+| `no-use-before-define`                | Allow declarations to refer to later declarations.                                                                               |
+| `no-inline-comments`                  | Allow short explanations beside the code they describe.                                                                          |
+| `typescript/consistent-return`        | Leave return types and Effect generator branches to TypeScript.                                                                  |
+
+### Supported-host adjustments
+
+The imported configurations need two small adjustments; these are separate
+from the eleven shared overrides above:
+
+- React's explicit disables for `jsx-a11y/no-autofocus` and
+  `react/forward-ref-uses-ref` are omitted. This lets the host's correctness
+  settings apply: selecting `strict` keeps both at error level. Merely putting
+  `strict` last would not overcome an explicit upstream disable when strict
+  enables a rule through its correctness category.
+- Vitest's file override disabling `vitest/valid-title` is also omitted, so
+  strict's correctness setting still applies inside test files.
+
+The tests install the packed archive on both supported hosts and compare
+every resolved strict rule, including its options, with `[style, strict]`.
+They also check inherited file overrides. These adjustments import no strict
+settings and leave every other upstream setting intact.
+
+### Ultracite 8.0.1 comparison
+
+The installed npm archives were compared, including rule options and file
+patterns, rather than relying on release notes. For the three selected presets:
+
+| Preset | Rules in 7.12.0 | Rules in 8.0.1 | Change                                                        |
+| ------ | --------------: | -------------: | ------------------------------------------------------------- |
+| Core   |             536 |            537 | Adds `typescript/no-generated-empty-object-type` as an error. |
+| React  |             124 |            124 | `react/jsx-no-target-blank` adds `{ forms: true }`.           |
+| Vitest |              74 |             75 | Adds `vitest/consistent-test-it` as an error.                 |
+
+Counts include entries explicitly set to off and entries in file overrides.
+No rule is removed and no other rule severity or option changes. Core's shared
+test overrides and Vitest's test rules also start matching `.mts`, `.cts`,
+`.mjs` and `.cjs` files. Shared ignores, globals and plugin lists are unchanged.
+Both versions contain `no-unmodified-loop-condition` with
+`checkConditionalExpressions: true`; the supported hosts accept that option.
+Ultracite 8 requires Oxlint 1.86 or newer, so 1.80 and 1.85 are no longer
+supported. Its Oxfmt peer requires at least 0.71; repository tooling uses 0.74.0.
+The archive is checked on exactly 1.86.0 and the current 1.89.0.
 
 ## Project settings
 

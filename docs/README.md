@@ -24,3 +24,7 @@ checked at a particular commit; they do not replace the current runbook.
 - [0.4.0 consolidation candidate](evidence/2026-10-18-consolidation-candidate.md) — 18 October 2026; historical local qualification before publication; see the follow-up below.
 
 - [npm 0.4.0 publication](evidence/2026-10-18-npm-040.md) — 18 October 2026; canonical archive equality, trusted publishing, public host tests and verified signatures/provenance.
+
+- [Optional style candidate](evidence/2026-10-21-style-candidate.md) — 21 October 2026; version comparison, archive checks and consumer findings.
+
+- [Latest dependencies and style candidate](evidence/2026-10-21-latest-dependencies.md) — 21 October 2026; replaces the earlier style trial after upgrading every direct package.
