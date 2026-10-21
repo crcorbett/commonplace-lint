@@ -1,7 +1,8 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { expect, it } from "@effect/vitest";
-import { Array, Effect, FileSystem, Schema, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/process";
+import { Array, Effect, FileSystem, Schema } from "effect";
+import { command, success } from "./command.js";
+import { checkStyleConsumer } from "./style.consumer.js";
 
 const repository = new URL("../../../", import.meta.url).pathname;
 const PackageArchive = Schema.NonEmptyArray(
@@ -32,47 +33,6 @@ export const capture = Effect.gen(function* () {
     stderr: handle.stderr.pipe(Stream.runCollect)
   }${concurrent ? ', { concurrency: "unbounded" }' : ""});
 });`;
-
-const command = Effect.fnUntraced(function* (
-  cwd: string,
-  executable: string,
-  args: readonly string[],
-) {
-  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
-  return yield* Effect.scoped(
-    Effect.gen(function* () {
-      const child = yield* spawner.spawn(
-        ChildProcess.make(executable, args, { cwd, stdout: "pipe", stderr: "pipe" }),
-      );
-      const read = (stream: typeof child.stdout) =>
-        stream.pipe(
-          Stream.decodeText,
-          Stream.runFold(
-            () => "",
-            (text, chunk) => text + chunk,
-          ),
-        );
-      return yield* Effect.all(
-        {
-          exitCode: child.exitCode,
-          stdout: read(child.stdout),
-          stderr: read(child.stderr),
-        },
-        { concurrency: "unbounded" },
-      );
-    }),
-  );
-});
-
-const success = Effect.fnUntraced(function* (
-  cwd: string,
-  executable: string,
-  args: readonly string[],
-) {
-  const result = yield* command(cwd, executable, args);
-  expect(result.exitCode, result.stderr || result.stdout).toBe(0);
-  return result.stdout;
-});
 
 Array.forEach(["1.80.0", "1.85.0", "1.86.0"], (version) =>
   it.effect(
@@ -155,6 +115,7 @@ assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, w
 `,
         );
         yield* success(directory, "node", ["inspect.mjs"]);
+        yield* checkStyleConsumer(directory);
         yield* fs.writeFileString(
           `${directory}/oxlint.config.ts`,
           `import { defineConfig } from "oxlint";
@@ -163,7 +124,7 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
         );
         yield* fs.writeFileString(
           `${directory}/usage.ts`,
-          'import { defineConfig } from "oxlint"; import { general, effect, alchemy } from "@commonplaces/oxlint-plugin"; import strict from "@commonplaces/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
+          'import { defineConfig } from "oxlint"; import { general, effect, alchemy, style, strict as strictConfig } from "@commonplaces/oxlint-plugin"; import styleConfig from "@commonplaces/oxlint-plugin/style"; import strict from "@commonplaces/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [style, strictConfig, styleConfig, general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
         );
         yield* success(directory, `${repository}node_modules/.bin/tsc`, [
           "--noEmit",

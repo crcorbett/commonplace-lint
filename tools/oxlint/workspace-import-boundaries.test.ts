@@ -81,7 +81,11 @@ const lint = Effect.fnUntraced(function* (
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   return yield* Effect.scoped(
     Effect.gen(function* () {
-      const directory = yield* fs.makeTempDirectoryScoped({ prefix: "workspace-boundaries-" });
+      const temporaryDirectory = yield* fs.makeTempDirectoryScoped({
+        prefix: "workspace-boundaries-",
+      });
+      // Oxlint resolves macOS temporary-directory aliases before reporting paths.
+      const directory = yield* fs.realPath(temporaryDirectory);
       yield* Effect.forEach(
         fixtures,
         (fixture) =>

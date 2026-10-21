@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 106 rules and six configuration groups
+       ├── src: 106 rules, six configuration groups and optional style
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -27,7 +27,7 @@ not applicable: this repository has no application to run or deploy. Private
 workflow skill folders are not redistributed into the public library. The root
 instructions and local documentation own the small contribution contract.
 
-All ten package exports point to compiled files, including local workspace
+All eleven package exports point to compiled files, including local workspace
 use. There is deliberately no source condition: archive tests must catch
 missing build output. Oxlint owns synchronous rule callbacks; pure rules use
 immutable Effect collections. Native host syntax and configuration exceptions

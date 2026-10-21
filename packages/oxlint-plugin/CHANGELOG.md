@@ -1,5 +1,14 @@
 # @commonplaces/oxlint-plugin
 
+## Unreleased
+
+### Minor Changes
+
+- Add a separate optional `style` preset using Ultracite 7.12.0 core, React and
+  Vitest, with eleven shared Site/Common Practice overrides. Extend
+  `[style, strict, project]` to retain strict safety checks. Keep strict unchanged
+  and support all existing Oxlint hosts through documented configuration adjustments.
+
 ## 0.4.1
 
 ### Patch Changes

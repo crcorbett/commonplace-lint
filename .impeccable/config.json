@@ -1,0 +1,15 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": ["packages/oxlint-plugin/test/style.consumer.ts"],
+        "createdAt": "2026-10-21T00:46:24.555Z",
+        "reason": "Codex: this is an intentional negative JSX fixture that proves the style preset reports missing image accessibility text."
+      }
+    ]
+  }
+}

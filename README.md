@@ -20,8 +20,25 @@ checks. npm installation does not depend on a GitHub archive mirror.
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
 when upgrading.
-See [package usage](packages/oxlint-plugin/README.md) for all six configuration groups, the `strict` composition, individual rules
+See [package usage](packages/oxlint-plugin/README.md) for all six configuration groups, the optional `style` preset, the `strict` composition, individual rules
 and project settings.
+
+## Optional style checks
+
+`style` restores Ultracite's core, React and Vitest checks with the shared
+Common Practice and Site overrides. It is separate from `strict`:
+
+```ts
+import { style, strict } from "@commonplaces/oxlint-plugin";
+import { defineConfig } from "oxlint";
+import project from "./tools/oxlint/project.config.ts";
+
+export default defineConfig({ extends: [style, strict, project] });
+```
+
+Keep that order so the strict safety settings win. Use `oxlint --type-aware
+--deny-warnings .` for the complete checks. See [package usage](packages/oxlint-plugin/README.md#optional-style-preset)
+for the pinned version, all overrides and supported-host adjustments.
 
 ## Develop
 

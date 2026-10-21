@@ -127,3 +127,5 @@ export const alchemy = {
 export const strict = {
   extends: [general, effect, alchemy, conventions, web, typescript],
 } satisfies OxlintConfig;
+
+export { default as style } from "./style.js";

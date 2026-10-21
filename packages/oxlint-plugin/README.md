@@ -46,7 +46,7 @@ project facts.
 `defineConfig({ extends: [strict, projectPolicy] })`. It adds no project paths
 or source ignores. Keep exact ownership settings in the consuming project.
 
-The root exports these six groups and the `strict` composition. Individual plugins use
+The root exports these six groups, the optional `style` preset and the `strict` composition. Individual plugins use
 the subpaths below. For example, a JSON configuration can enable one rule:
 
 ```json
@@ -55,6 +55,93 @@ the subpaths below. For example, a JSON configuration can enable one rule:
   "rules": { "strict-effect/static-layers": "error" }
 }
 ```
+
+## Optional style preset
+
+Add `style` before `strict`, then keep the project's own policy last:
+
+```ts
+import { style, strict } from "@commonplaces/oxlint-plugin";
+import { defineConfig } from "oxlint";
+import project from "./tools/oxlint/project.config.ts";
+
+export default defineConfig({ extends: [style, strict, project] });
+```
+
+Run `oxlint --type-aware --deny-warnings .`. `style` also works alone and is
+available as the default export of `@commonplaces/oxlint-plugin/style`.
+It never imports or extends `strict`; `strict` still contains only its original
+six groups. Adding this release without selecting `style` leaves strict checks
+unchanged. This preset includes more than formatting preferences: Ultracite
+also supplies accessibility, test and correctness checks, browser globals,
+shared ignores and test-file overrides. Its ignores can reduce which files are
+checked; keep the project's own file policy explicit.
+
+Ultracite **7.12.0** is an exact regular dependency. This restores the version
+both consumers used and requires no separate consumer install. A peer would
+make consumers choose and install a second package, and could make imports of
+the root package fail when it is missing. The dependency also installs
+Ultracite's CLI dependencies; only the three Oxlint configuration modules run
+when importing this preset. No Ultracite CLI, formatter or Effect runtime runs.
+
+### Shared overrides
+
+These eleven rules are off in both historical root configurations: Common
+Practice at `3b6beef^` and Site at `dda3820`. File-specific permissions and
+size limits remain in each consumer's project policy.
+
+| Rule set to `off`                     | Reason                                                                                                                           |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `unicorn/no-array-for-each`           | Allow Effect's immutable `Array.forEach`; strict collection checks cover native mutation.                                        |
+| `unicorn/no-array-sort`               | Allow Effect's immutable `Array.sort`; strict collection checks cover native mutation.                                           |
+| `unicorn/throw-new-error`             | Allow the `Schema.TaggedError` factory; `strict-effect/error-constructor-new` checks error construction when strict is selected. |
+| `no-redeclare`                        | Allow TypeScript overloads and merged declarations.                                                                              |
+| `react/function-component-definition` | Allow the project's existing component declaration forms.                                                                        |
+| `sort-keys`                           | Keep related object fields in meaningful order.                                                                                  |
+| `func-names`                          | Allow unnamed library callbacks and Effect generators.                                                                           |
+| `func-style`                          | Allow function declarations and functions stored in constants.                                                                   |
+| `no-use-before-define`                | Allow declarations to refer to later declarations.                                                                               |
+| `no-inline-comments`                  | Allow short explanations beside the code they describe.                                                                          |
+| `typescript/consistent-return`        | Leave return types and Effect generator branches to TypeScript.                                                                  |
+
+### Supported-host adjustments
+
+The imported configurations need three small adjustments; these are separate
+from the eleven shared overrides above:
+
+- Core's `no-unmodified-loop-condition` stays an error with its default options.
+  Its newer `checkConditionalExpressions` option is rejected by Oxlint 1.80.0.
+  The extra conditional-expression analysis from that option is not enabled.
+- React's explicit disables for `jsx-a11y/no-autofocus` and
+  `react/forward-ref-uses-ref` are omitted. This lets the host's correctness
+  settings apply: selecting `strict` keeps both at error level. Merely putting
+  `strict` last would not overcome an explicit upstream disable when strict
+  enables a rule through its correctness category.
+- Vitest's file override disabling `vitest/valid-title` is also omitted, so
+  strict's correctness setting still applies inside test files.
+
+The tests install the packed archive on all three supported hosts and compare
+every resolved strict rule, including its options, with `[style, strict]`.
+They also check inherited file overrides. These adjustments import no strict
+settings and leave every other upstream setting intact.
+
+### Ultracite 8.0.1 comparison
+
+The installed npm archives were compared, including rule options and file
+patterns, rather than relying on release notes. For the three selected presets:
+
+| Preset | Rules in 7.12.0 | Rules in 8.0.1 | Change                                                        |
+| ------ | --------------: | -------------: | ------------------------------------------------------------- |
+| Core   |             536 |            537 | Adds `typescript/no-generated-empty-object-type` as an error. |
+| React  |             124 |            124 | `react/jsx-no-target-blank` adds `{ forms: true }`.           |
+| Vitest |              74 |             75 | Adds `vitest/consistent-test-it` as an error.                 |
+
+Counts include entries explicitly set to off and entries in file overrides.
+No rule is removed and no other rule severity or option changes. Core's shared
+test overrides and Vitest's test rules also start matching `.mts`, `.cts`,
+`.mjs` and `.cjs` files. Shared ignores, globals and plugin lists are unchanged.
+Both versions contain the loop-rule option described above. Keep 7.12.0 for
+this restoration; adopting 8.x is a separate policy change.
 
 ## Project settings
 
