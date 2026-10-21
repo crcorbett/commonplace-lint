@@ -16,5 +16,6 @@
       ]
     }
   },
-  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"]
+  "ignoreFiles": ["tools/oxlint/fixtures/**/*.ts"],
+  "ignoreDependencies": ["@effect/language-service"]
 }

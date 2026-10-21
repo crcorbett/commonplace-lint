@@ -7,19 +7,19 @@
       "packages/*"
     ],
     "catalog": {
-      "@effect/platform-node": "4.0.2",
-      "@effect/tsgo": "0.38.0",
-      "@effect/vitest": "4.0.2",
-      "@changesets/cli": "3.0.1",
-      "@types/bun": "1.4.0",
-      "effect": "4.0.2",
-      "knip": "6.32.2",
-      "oxfmt": "0.65.0",
-      "oxlint": "1.80.0",
-      "oxlint-tsgolint": "7.0.2001",
-      "turbo": "2.10.11",
+      "@effect/platform-node": "4.0.5",
+      "@effect/tsgo": "0.55.0",
+      "@effect/vitest": "4.0.5",
+      "@changesets/cli": "3.0.3",
+      "@types/bun": "1.4.3",
+      "effect": "4.0.5",
+      "knip": "6.42.1",
+      "oxfmt": "0.74.0",
+      "oxlint": "1.89.0",
+      "oxlint-tsgolint": "7.0.2004",
+      "turbo": "2.11.10",
       "typescript": "7.0.2",
-      "vitest": "5.0.1"
+      "vitest": "5.0.5"
     }
   },
   "type": "module",
@@ -59,10 +59,10 @@
     "vitest": "catalog:"
   },
   "overrides": {
-    "@effect/platform-node-shared": "4.0.2"
+    "@effect/platform-node-shared": "4.0.5"
   },
   "engines": {
-    "bun": "1.4.0"
+    "bun": "1.4.3"
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.3"
 }

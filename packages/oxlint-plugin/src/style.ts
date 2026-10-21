@@ -7,11 +7,7 @@ import vitest from "ultracite/oxlint/vitest";
 /** Optional shared style checks. Extend before strict and the project policy. */
 const style: OxlintConfig = {
   extends: [
-    {
-      ...core,
-      // Oxlint 1.80 rejects the newer checkConditionalExpressions option.
-      rules: { ...core.rules, "no-unmodified-loop-condition": "error" },
-    },
+    core,
     {
       ...react,
       // Leave these correctness rules to the host category settings. Explicit

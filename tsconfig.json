@@ -17,12 +17,36 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2024",
-    "types": ["bun"]
+    "types": ["bun"],
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnostics": false,
+        "overrides": [
+          {
+            "include": ["tools/oxlint/**/*.test.ts"],
+            "options": {
+              "allowedUnstableApis": [
+                "@effect/platform-node/NodeServices#layer",
+                "@effect/vitest#it",
+                "effect/FileSystem#FileSystem",
+                "effect/Path#Path",
+                "effect/process/ChildProcess#make",
+                "effect/process/ChildProcessSpawner#ChildProcessSpawner",
+                "effect/process/ChildProcessSpawner#ExitCode"
+              ]
+            }
+          }
+        ]
+      }
+    ]
   },
   "files": [],
   "references": [
     {
-      "path": "./packages/oxlint-plugin"
+      "path": "./packages/oxlint-plugin/tsconfig.build.json"
     }
-  ]
+  ],
+  "include": ["*.ts", "tools/**/*.ts"],
+  "exclude": ["tools/oxlint/fixtures"]
 }

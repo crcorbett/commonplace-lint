@@ -36,11 +36,23 @@ factories in production code.
 
 ## Checks
 
-Bun 1.4.0 and exact dependency versions come from the existing qualified
-implementation, not a claim that they are the newest registry versions. Effect
-and platform dependencies remain on 4.0.2. Upgrading versions requires fresh
-archive tests with every supported Oxlint host. The host SDK remains 1.80.0;
-peer support is exactly 1.80.0, 1.85.0 or 1.86.0.
+Direct dependency versions were checked against npm's latest releases on
+21 October 2026 and pinned exactly. Effect and platform packages use 4.0.5;
+Oxlint and its host SDK use 1.89.0; Effect's lint tool uses 0.55.0 with the
+supported oxlint-tsgolint 7.0.2004. Bun is 1.4.3 and Oxfmt is 0.74.0.
+Upgrading versions requires fresh archive tests with every supported host.
+Peer support is exactly Oxlint 1.86.0 or 1.89.0. Ultracite 8 requires at least
+1.86, so the older 1.80 and 1.85 hosts are no longer supported.
+
+Effect's native checker uses the `@effect/language-service` configuration name;
+`@effect/tsgo` supplies it, so Knip ignores that one virtual dependency name.
+Oxlint owns Effect diagnostics; editor diagnostics are disabled to avoid a
+second copy. Root tooling is included in its TypeScript project so the native
+checker can read its settings. The root reference points to the actual package
+build configuration. The root test project allows seven named native APIs and package tests allow
+five of them through `allowedUnstableApis`; the instability rule remains active for other
+APIs and files. A real-command test proves both limits. The nominal error brand
+in the constructor fixture keeps it valid under the latest checker.
 
 `bun run test` builds first, then runs rule and archive consumers.
 `bun run verification` checks format, lint, both Knip graphs, TypeScript, build,

@@ -1,16 +1,19 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { expect, it } from "@effect/vitest";
-import { Array, Effect, FileSystem, Schema } from "effect";
+import { Array, Effect, FileSystem, Match, Schema } from "effect";
 import { command, success } from "./command.js";
 import { checkStyleConsumer } from "./style.consumer.js";
 
 const repository = new URL("../../../", import.meta.url).pathname;
-const PackageArchive = Schema.NonEmptyArray(
-  Schema.Struct({
-    filename: Schema.String,
-    files: Schema.Array(Schema.Struct({ path: Schema.String })),
-  }),
-);
+const Archive = Schema.Struct({
+  filename: Schema.String,
+  files: Schema.Array(Schema.Struct({ path: Schema.String })),
+});
+const Archives = Schema.NonEmptyArray(Archive);
+const PackageArchive = Schema.Union([
+  Archives,
+  Schema.Struct({ "@commonplaces/oxlint-plugin": Archive }),
+]);
 const Report = Schema.Struct({
   diagnostics: Schema.Array(Schema.Struct({ code: Schema.String, filename: Schema.String })),
   number_of_files: Schema.Int,
@@ -34,7 +37,7 @@ export const capture = Effect.gen(function* () {
   }${concurrent ? ', { concurrency: "unbounded" }' : ""});
 });`;
 
-Array.forEach(["1.80.0", "1.85.0", "1.86.0"], (version) =>
+Array.forEach(["1.86.0", "1.89.0"], (version) =>
   it.effect(
     `installs the archive independently and runs all exports with Oxlint ${version}`,
     () =>
@@ -51,8 +54,14 @@ Array.forEach(["1.80.0", "1.85.0", "1.86.0"], (version) =>
           directory,
         ]);
         const archives = yield* Schema.decodeEffect(Schema.fromJsonString(PackageArchive))(packed);
-        expect(archives).toHaveLength(1);
-        const [archive] = archives;
+        const archive = Match.value(archives).pipe(
+          Match.when(Schema.is(Archives), (reports) => {
+            expect(reports).toHaveLength(1);
+            const [archive] = reports;
+            return archive;
+          }),
+          Match.orElse(({ "@commonplaces/oxlint-plugin": archive }) => archive),
+        );
         expect(
           Array.every(
             archive.files,

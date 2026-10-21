@@ -13,7 +13,10 @@ const Bounds = Schema.makeFilter<typeof Fields.Type>(
 const Row = Fields.check(Bounds);
 const RowId = Schema.Trimmed.check(Schema.isMinLength(1)).pipe(Schema.brand("ExampleRowId"));
 const ProviderRow = Schema.Struct({ ...Fields.fields, id: RowId }).check(Bounds);
-class InvalidRowError extends Schema.TaggedError<InvalidRowError>()("InvalidRowError", {}) {}
+class InvalidRowError extends Schema.TaggedError<
+  InvalidRowError,
+  { readonly brand: unique symbol }
+>()("InvalidRowError", {}) {}
 
 it.effect("qualifies constructor errors and shared record checks with the installed Effect", () =>
   Effect.gen(function* () {

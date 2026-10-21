@@ -1,18 +1,21 @@
 # @commonplaces/oxlint-plugin
 
 106 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. This package supports **Oxlint 1.80.0, 1.85.0 or 1.86.0** and **Node 22.14 or newer**.
+checks. This package supports **Oxlint 1.86.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
-the rule tests. The development tools use 1.80.0; consuming projects may use any supported version.
-All three exact versions are checked with independently installed archives. ESLint is not a supported host.
+the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
+Both exact versions are checked with independently installed archives. ESLint is not a supported host.
 
 ## Install
 
 Install the latest npm release and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.89.0
 ```
+
+The style preset and these host requirements are pending publication. Published
+0.4.0 keeps its earlier host list; adoption follows a separately authorised release.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
 archives remain separate distribution artefacts; a GitHub release does not publish
@@ -77,8 +80,8 @@ also supplies accessibility, test and correctness checks, browser globals,
 shared ignores and test-file overrides. Its ignores can reduce which files are
 checked; keep the project's own file policy explicit.
 
-Ultracite **7.12.0** is an exact regular dependency. This restores the version
-both consumers used and requires no separate consumer install. A peer would
+Ultracite **8.0.1** is an exact regular dependency, selected at the owner's
+request to use the latest releases. It requires no separate consumer install. A peer would
 make consumers choose and install a second package, and could make imports of
 the root package fail when it is missing. The dependency also installs
 Ultracite's CLI dependencies; only the three Oxlint configuration modules run
@@ -106,12 +109,9 @@ size limits remain in each consumer's project policy.
 
 ### Supported-host adjustments
 
-The imported configurations need three small adjustments; these are separate
+The imported configurations need two small adjustments; these are separate
 from the eleven shared overrides above:
 
-- Core's `no-unmodified-loop-condition` stays an error with its default options.
-  Its newer `checkConditionalExpressions` option is rejected by Oxlint 1.80.0.
-  The extra conditional-expression analysis from that option is not enabled.
 - React's explicit disables for `jsx-a11y/no-autofocus` and
   `react/forward-ref-uses-ref` are omitted. This lets the host's correctness
   settings apply: selecting `strict` keeps both at error level. Merely putting
@@ -120,7 +120,7 @@ from the eleven shared overrides above:
 - Vitest's file override disabling `vitest/valid-title` is also omitted, so
   strict's correctness setting still applies inside test files.
 
-The tests install the packed archive on all three supported hosts and compare
+The tests install the packed archive on both supported hosts and compare
 every resolved strict rule, including its options, with `[style, strict]`.
 They also check inherited file overrides. These adjustments import no strict
 settings and leave every other upstream setting intact.
@@ -140,8 +140,11 @@ Counts include entries explicitly set to off and entries in file overrides.
 No rule is removed and no other rule severity or option changes. Core's shared
 test overrides and Vitest's test rules also start matching `.mts`, `.cts`,
 `.mjs` and `.cjs` files. Shared ignores, globals and plugin lists are unchanged.
-Both versions contain the loop-rule option described above. Keep 7.12.0 for
-this restoration; adopting 8.x is a separate policy change.
+Both versions contain `no-unmodified-loop-condition` with
+`checkConditionalExpressions: true`; the supported hosts accept that option.
+Ultracite 8 requires Oxlint 1.86 or newer, so 1.80 and 1.85 are no longer
+supported. Its Oxfmt peer requires at least 0.71; repository tooling uses 0.74.0.
+The archive is checked on exactly 1.86.0 and the current 1.89.0.
 
 ## Project settings
 

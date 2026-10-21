@@ -1,5 +1,9 @@
 # Optional style candidate — 21 October 2026
 
+Superseded by [the latest-dependency candidate](2026-10-21-latest-dependencies.md)
+after the owner requested the latest of every package. This earlier trial is
+retained as dated evidence.
+
 This records a local candidate, not a release or consumer adoption. The package
 manifest remains at the existing unreleased 0.4.1; the accompanying minor
 Changeset is for the later authorised version step.

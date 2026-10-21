@@ -72,6 +72,10 @@
     {
       "path": "docs/evidence/2026-10-21-style-candidate.md",
       "owner": "dated optional style candidate and consumer check evidence"
+    },
+    {
+      "path": "docs/evidence/2026-10-21-latest-dependencies.md",
+      "owner": "dated latest dependency and style candidate qualification"
     }
   ]
 }

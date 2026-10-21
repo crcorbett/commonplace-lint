@@ -19,5 +19,6 @@
     "tools/oxlint/fixtures/**/*.ts",
     "tools/oxlint/conventions.cases.ts",
     "packages/oxlint-plugin/test/**/*.ts"
-  ]
+  ],
+  "ignoreDependencies": ["@effect/language-service"]
 }

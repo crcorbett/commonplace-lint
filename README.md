@@ -1,7 +1,7 @@
 # Commonplace Lint
 
 106 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
-`@commonplaces/oxlint-plugin`. Supports Oxlint **1.80.0, 1.85.0 or 1.86.0** and Node
+`@commonplaces/oxlint-plugin`. Supports Oxlint **1.86.0 or 1.89.0** and Node
 **22.14 or newer**. Licensed under MIT.
 
 ## Install
@@ -9,8 +9,11 @@
 Install the latest published npm version and save the exact resolved version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.80.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@latest oxlint@1.89.0
 ```
+
+The style preset and these host requirements are pending publication. Published
+0.4.0 keeps its earlier host list; adoption follows a separately authorised release.
 
 The qualified npm `latest` is 0.4.0 with 106 rules and the complete `strict`
 profile. See [the publication record](docs/evidence/2026-10-18-npm-040.md)
@@ -42,7 +45,7 @@ for the pinned version, all overrides and supported-host adjustments.
 
 ## Develop
 
-Use Bun 1.4.0 and Node 22.14 or newer:
+Use Bun 1.4.3 and Node 24.15 or newer for the current npm 12 tooling:
 
 ```sh
 bun install --frozen-lockfile
@@ -52,7 +55,7 @@ bun run pack
 ```
 
 The build produces ordinary JavaScript and declarations. Tests install the
-actual archive in separate projects with all three supported Oxlint versions.
+actual archive in separate projects with both supported Oxlint versions.
 
 - [Repository boundaries](ARCHITECTURE.md)
 - [Documentation](docs/README.md)

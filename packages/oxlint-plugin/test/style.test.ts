@@ -19,7 +19,7 @@ it("composes exactly the upstream presets and the eleven shared overrides", () =
   expect(styleSubpath).toBe(style);
   expect(style).toEqual({
     extends: [
-      { ...core, rules: { ...core.rules, "no-unmodified-loop-condition": "error" } },
+      core,
       {
         ...react,
         rules: Record.filter(
