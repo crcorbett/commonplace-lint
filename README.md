@@ -21,9 +21,10 @@ After installation, run `npx --no-install effect-tsgo patch --no-typescript
 dependency install. See [native Effect setup](packages/oxlint-plugin/README.md#native-effect-correctness).
 Consumer adoption is a separate step.
 
-The [0.5.0 publication record](docs/evidence/2026-10-21-npm-050.md) preserves
-the earlier release checks. npm installation does not depend on a GitHub
-archive mirror.
+The verified npm `latest` is 0.6.0. See [the publication record](docs/evidence/2026-10-22-npm-060.md)
+for the exact source, matching archive, provenance and fresh consumer checks.
+The [0.5.0 record](docs/evidence/2026-10-21-npm-050.md) preserves the earlier
+release checks. npm installation does not depend on a GitHub archive mirror.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
