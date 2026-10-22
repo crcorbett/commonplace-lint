@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 106 rules, six configuration groups and optional style
+       ├── src: 107 rules, six configuration groups and optional style
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -41,8 +41,9 @@ Direct dependency versions were checked against npm's latest releases on
 Oxlint and its host SDK use 1.89.0; Effect's lint tool uses 0.55.0 with the
 supported oxlint-tsgolint 7.0.2004. Bun is 1.4.3 and Oxfmt is 0.74.0.
 Upgrading versions requires fresh archive tests with every supported host.
-Peer support is exactly Oxlint 1.86.0 or 1.89.0. Ultracite 8 requires at least
-1.86, so the older 1.80 and 1.85 hosts are no longer supported.
+Peer support is exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. These are the hosts
+supported by the pinned native Effect checker. Version 0.6.0 removes
+1.86.0 rather than silently omitting native correctness checks there.
 
 Effect's native checker uses the `@effect/language-service` configuration name;
 `@effect/tsgo` supplies it, so Knip ignores that one virtual dependency name.
@@ -59,8 +60,33 @@ in the constructor fixture keeps it valid under the latest checker.
 workspace ownership and documentation links. Turbo inputs include root config
 read by each package task. `bun run pack` cleans and builds the package and
 writes a standard npm archive. Only dist, README, package.json and LICENSE are
-included. Tests prove accepted and rejected code, exported groups and all 106
+included. Tests prove accepted and rejected code, exported groups and all 107
 registrations outside the workspace.
+
+The optional style preset removes advice that conflicts with strict Effect,
+such as adding async/await, loops, mutation or ternaries. Tests check actual code
+with type-aware linting in installed archives on every supported Oxlint version,
+as well as comparing resolved settings. Approved host and SDK files have exact
+permissions; forbidden examples must retain all strict reports. The curried
+collection check uses each operation's argument count: reduce needs two
+arguments before its input, while map needs one.
+
+The `effect` group includes upstream's native correctness preset, with all 26
+rules promoted to errors and type-aware linting enabled. `strict` inherits it.
+The package ships pinned `@effect/tsgo` and `oxlint-tsgolint` dependencies.
+Consumers run `effect-tsgo patch --no-typescript --oxlint` after installation to
+prepare their local linter binaries; selecting the group without that setup
+fails instead of silently losing checks. No Effect runtime runs in the package.
+Archive tests use each supported host, prove missing setup fails, check native
+diagnostics without extra command-line severity/type-aware flags, and check
+approved Effect tests alongside forbidden code.
+
+`strict-effect/no-copying-accumulator` rejects recognised copies of a growing
+reducer accumulator. It understands Effect imports and immutable local aliases,
+and recommends collection transformations or persistent structures. The package
+itself uses Chunk for path accumulation and HashMap for configuration-property
+collection. Fixed record updates and persistent updates remain valid. This is a
+local syntax check, not a runtime cost measurement or whole-program analysis.
 
 ## Releases
 

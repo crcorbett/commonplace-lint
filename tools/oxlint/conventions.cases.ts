@@ -74,6 +74,16 @@ export const conventionCases: readonly Case[] = [
     valid: 'import { Array as A } from "effect"; export const x = (A: Client) => A.map(values, f);',
   },
   {
+    rule: "curried-collections",
+    invalid: 'import { Array as A } from "effect"; export const x = A.reduce(values, 0, f);',
+    valid: 'import { Array as A } from "effect"; export const x = A.reduce(0, f)(values);',
+  },
+  {
+    rule: "curried-collections",
+    invalid: 'import { reduce as fold } from "effect/Array"; export const x = fold(values, 0, f);',
+    valid: 'import { reduce as fold } from "effect/Array"; export const x = fold(0, f)(values);',
+  },
+  {
     rule: "no-wrapper-composition",
     invalid: "export const x = outer(inner(value));",
     valid: "export const x = value.pipe(inner, outer);",

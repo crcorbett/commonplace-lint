@@ -77,22 +77,24 @@ export const syntaxRules = {
         if (
           Array.some(["Array", "Chunk", "HashMap", "HashSet", "Option", "Record"], (module) =>
             memberName(context, node.callee, `effect/${module}`).pipe(
-              Option.exists((name) =>
-                Array.contains(
-                  [
-                    "every",
-                    "filter",
-                    "findFirst",
-                    "flatMap",
-                    "forEach",
-                    "map",
-                    "partition",
-                    "reduce",
-                    "some",
-                    "sort",
-                  ],
-                  name,
-                ),
+              Option.exists(
+                (name) =>
+                  Array.contains(
+                    [
+                      "every",
+                      "filter",
+                      "findFirst",
+                      "flatMap",
+                      "forEach",
+                      "map",
+                      "partition",
+                      "reduce",
+                      "some",
+                      "sort",
+                    ],
+                    name,
+                  ) &&
+                  (name !== "reduce" || node.arguments.length >= 3),
               ),
             ),
           )

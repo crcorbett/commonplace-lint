@@ -1,4 +1,5 @@
 import { conventionCases } from "./conventions.cases";
+import { accumulationCases } from "./accumulation.cases";
 import type { Case } from "./conventions.cases";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, it } from "@effect/vitest";
@@ -21,6 +22,7 @@ const Report = Schema.fromJsonString(
 
 const cases: readonly Case[] = [
   ...conventionCases,
+  ...accumulationCases,
   {
     rule: "require-service-operation-instrumentation",
     plugin: "effect",

@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 import type { ESTree } from "@oxlint/plugins";
-import { Array, Option, Predicate } from "effect";
+import { Array, Chunk, Option, Predicate } from "effect";
 import { workspaceImportBoundariesRule } from "./package/workspace-import-boundaries.js";
 import { noRedundantRuleRegistrations } from "./config.js";
 
@@ -11,16 +11,16 @@ type ImportNode =
   | ESTree.ExportAllDeclaration;
 
 const resolveRelative = (fileName: string, specifier: string): string =>
-  Array.join(
+  Chunk.join(
     Array.reduce(
       specifier.split("/"),
-      Array.dropRight(fileName.split("/"), 1),
+      Chunk.fromIterable(Array.dropRight(fileName.split("/"), 1)),
       (segments, segment) =>
         segment === ".."
-          ? Array.dropRight(segments, 1)
+          ? Chunk.dropRight(segments, 1)
           : segment === "." || segment.length === 0
             ? segments
-            : [...segments, segment],
+            : Chunk.append(segments, segment),
     ),
     "/",
   );

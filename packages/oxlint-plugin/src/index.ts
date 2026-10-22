@@ -1,4 +1,5 @@
 import type { OxlintConfig } from "oxlint";
+import { correctness } from "@effect/tsgo/oxlint-presets";
 import { Record } from "effect";
 import conventionPlugin from "./conventions.js";
 import webPlugin from "./web.js";
@@ -27,7 +28,8 @@ export const general = {
 } satisfies OxlintConfig;
 
 /** Effect code checks. Add the general group separately if wanted. */
-export const effect = {
+export const effect: OxlintConfig = {
+  ...correctness,
   jsPlugins: [
     "@commonplaces/oxlint-plugin/effect",
     "@commonplaces/oxlint-plugin/strict-effect",
@@ -35,6 +37,7 @@ export const effect = {
     "@commonplaces/oxlint-plugin/anti-slop-effect",
   ],
   rules: {
+    ...Record.map(correctness.rules ?? {}, () => "error" as const),
     "effect/no-ambient-process": "error",
     "effect/no-async-await-promise": "error",
     "effect/no-console": "error",
@@ -54,6 +57,7 @@ export const effect = {
     "strict-effect/no-unchecked-json": "error",
     "strict-effect/no-native-work": "error",
     "strict-effect/no-imperative-collections": "error",
+    "strict-effect/no-copying-accumulator": "error",
     "strict-effect/no-native-client-replica": "error",
     "bun/no-ambient-host-api": "error",
     "anti-slop-effect/no-service-constructor-imports": "error",

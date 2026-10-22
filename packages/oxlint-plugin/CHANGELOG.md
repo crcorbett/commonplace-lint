@@ -1,5 +1,29 @@
 # @commonplaces/oxlint-plugin
 
+## 0.6.0
+
+### Minor Changes
+
+- Include all 26 native Effect correctness checks as errors in the effect and
+  strict groups, with type-aware checking enabled. Ship pinned @effect/tsgo and
+  oxlint-tsgolint dependencies. Consumers must run
+  `effect-tsgo patch --no-typescript --oxlint` after installation. Support exactly
+  Oxlint 1.87.0, 1.88.0 and 1.89.0; the native checker does not support 1.86.0.
+
+  Add strict-effect/no-copying-accumulator. Reject repeated accumulator spreads and
+  copying Effect Array/Record operations, while allowing persistent Chunk,
+  HashMap and HashSet updates. Recommend immutable alternatives without suggesting
+  mutation. Use persistent collections for the package's own path and property
+  accumulation.
+
+### Patch Changes
+
+- Stop the optional Ultracite style preset asking for async/await, loops, mutation,
+  native APIs, type assertions or ternaries that strict Effect code forbids. Allow
+  related Schema error and service classes to share a module. Keep strict checks
+  active and accept Effect's two-argument curried reduce while still rejecting its
+  three-argument data-first form.
+
 ## 0.5.0
 
 ### Minor Changes

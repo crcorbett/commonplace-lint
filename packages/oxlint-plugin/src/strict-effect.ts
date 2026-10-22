@@ -1,7 +1,9 @@
 import { subprocessPipeCapture } from "./subprocess-pipe-capture.js";
+import { noCopyingAccumulator } from "./accumulation.js";
 import { defineRule, eslintCompatPlugin } from "@oxlint/plugins";
 import type { Context, ESTree, Scope, Variable } from "@oxlint/plugins";
 import * as Array from "effect/Array";
+import * as Chunk from "effect/Chunk";
 import * as Function from "effect/Function";
 import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
@@ -2228,16 +2230,16 @@ const relativeModule = (filename: string, address: string): string => {
   const directory = filename.replaceAll("\\", "/").replace(/\/[^/]+$/u, "");
   return Function.pipe(
     `${directory}/${address}`.split("/"),
-    Array.reduce<readonly string[], string>([], (parts, part) => {
+    Array.reduce<Chunk.Chunk<string>, string>(Chunk.empty(), (parts, part) => {
       if (part === "." || part === "") {
         return parts;
       }
       if (part === "..") {
-        return Array.dropRight(parts, 1);
+        return Chunk.dropRight(parts, 1);
       }
-      return [...parts, part];
+      return Chunk.append(parts, part);
     }),
-    Array.join("/"),
+    Chunk.join("/"),
   );
 };
 
@@ -3712,6 +3714,7 @@ export default eslintCompatPlugin({
     "no-native-work": noNativeWork,
     "no-runtime-type-assertions": noRuntimeTypeAssertions,
     "no-imperative-collections": noImperativeCollections,
+    "no-copying-accumulator": noCopyingAccumulator,
     "public-host-literals": publicHostLiterals,
     "route-literal-ownership": routeLiteralOwnership,
     "http-client-ownership": httpClientOwnership,
