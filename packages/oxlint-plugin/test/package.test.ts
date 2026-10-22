@@ -3,6 +3,7 @@ import { expect, it } from "@effect/vitest";
 import { Array, Effect, FileSystem, Match, Schema } from "effect";
 import { command, success } from "./command.js";
 import { checkStyleConsumer } from "./style.consumer.js";
+import { checkNativeConsumer } from "./native.consumer.js";
 
 const repository = new URL("../../../", import.meta.url).pathname;
 const Archive = Schema.Struct({
@@ -37,7 +38,7 @@ export const capture = Effect.gen(function* () {
   }${concurrent ? ', { concurrency: "unbounded" }' : ""});
 });`;
 
-Array.forEach(["1.86.0", "1.89.0"], (version) =>
+Array.forEach(["1.87.0", "1.88.0", "1.89.0"], (version) =>
   it.effect(
     `installs the archive independently and runs all exports with Oxlint ${version}`,
     () =>
@@ -90,6 +91,8 @@ Array.forEach(["1.86.0", "1.89.0"], (version) =>
           "--package-lock=false",
           `${directory}/${archive.filename}`,
           `oxlint@${version}`,
+          "@effect/vitest@4.0.5",
+          "vitest@5.0.5",
         ]);
         yield* fs.writeFileString(
           `${directory}/inspect.mjs`,
@@ -106,10 +109,11 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [29, 9, 3, 1, 3, 15, 1, 33, 12]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 106);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [30, 9, 3, 1, 3, 15, 1, 33, 12]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 107);
 for (const group of [general, effect, alchemy, conventions, web]) {
   for (const id of Object.keys(group.rules)) {
+    if (id.startsWith("effecttsgo/")) continue;
     const slash = id.indexOf("/");
     const plugin = plugins.find(plugin => plugin.meta.name === id.slice(0, slash));
     assert.ok(plugin?.rules[id.slice(slash + 1)], id);
@@ -124,7 +128,28 @@ assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, w
 `,
         );
         yield* success(directory, "node", ["inspect.mjs"]);
-        yield* checkStyleConsumer(directory);
+        yield* fs.writeFileString(
+          `${directory}/native-setup.config.ts`,
+          'import { effect } from "@commonplaces/oxlint-plugin"; export default { extends: [effect] };',
+        );
+        const unpatched = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
+          "--config",
+          "native-setup.config.ts",
+          "--print-config",
+        ]);
+        expect(unpatched.exitCode).not.toBe(0);
+        expect(unpatched.stdout + unpatched.stderr).toContain("effecttsgo");
+        yield* success(directory, `${directory}/node_modules/.bin/effect-tsgo`, [
+          "patch",
+          "--no-typescript",
+          "--oxlint",
+        ]);
+        yield* fs.writeFileString(
+          `${directory}/tsconfig.json`,
+          '{"compilerOptions":{"strict":true,"module":"Preserve","moduleResolution":"Bundler","target":"ES2024","skipLibCheck":true},"include":["*.ts","*.tsx"]}',
+        );
+        yield* checkStyleConsumer(directory, `${repository}node_modules/.bin/tsc`);
+        yield* checkNativeConsumer(directory, `${repository}node_modules/.bin/tsc`);
         yield* fs.writeFileString(
           `${directory}/oxlint.config.ts`,
           `import { defineConfig } from "oxlint";
@@ -136,6 +161,7 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
           'import { defineConfig } from "oxlint"; import { general, effect, alchemy, style, strict as strictConfig } from "@commonplaces/oxlint-plugin"; import styleConfig from "@commonplaces/oxlint-plugin/style"; import strict from "@commonplaces/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [style, strictConfig, styleConfig, general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
         );
         yield* success(directory, `${repository}node_modules/.bin/tsc`, [
+          "--ignoreConfig",
           "--noEmit",
           "--skipLibCheck",
           "--strict",

@@ -1,24 +1,29 @@
 # Commonplace Lint
 
-106 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
-`@commonplaces/oxlint-plugin`. Supports Oxlint **1.86.0 or 1.89.0** and Node
+107 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
+`@commonplaces/oxlint-plugin`. Version 0.6.0 supports Oxlint **1.87.0, 1.88.0 or 1.89.0** and Node
 **22.14 or newer**. Licensed under MIT.
+
+Version 0.6.0 adds all 26 native Effect correctness checks as errors and an
+immutable accumulation check. The optional style preset allows strict Effect
+patterns without asking for forbidden async functions, loops or mutation.
 
 ## Install
 
-Install version 0.5.0 and save the exact version:
+Install version 0.6.0 and save the exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.0 oxlint@1.89.0
 ```
 
-Version 0.5.0 adds the optional style preset and the host requirements above.
-Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
+After installation, run `npx --no-install effect-tsgo patch --no-typescript
+--oxlint`. Repeat this in the consuming project's `prepare` command after each
+dependency install. See [native Effect setup](packages/oxlint-plugin/README.md#native-effect-correctness).
+Consumer adoption is a separate step.
 
-The qualified npm `latest` is 0.5.0 with 106 rules, the complete `strict`
-profile and the separate optional `style` preset. See [the publication record](docs/evidence/2026-10-21-npm-050.md)
-for the reviewed source, canonical registry archive, provenance and independent
-checks. npm installation does not depend on a GitHub archive mirror.
+The [0.5.0 publication record](docs/evidence/2026-10-21-npm-050.md) preserves
+the earlier release checks. npm installation does not depend on a GitHub
+archive mirror.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
@@ -55,7 +60,7 @@ bun run pack
 ```
 
 The build produces ordinary JavaScript and declarations. Tests install the
-actual archive in separate projects with both supported Oxlint versions.
+actual archive in separate projects with every supported Oxlint version.
 
 - [Repository boundaries](ARCHITECTURE.md)
 - [Documentation](docs/README.md)

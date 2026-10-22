@@ -1,21 +1,25 @@
 # @commonplaces/oxlint-plugin
 
-106 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. This package supports **Oxlint 1.86.0 or 1.89.0** and **Node 22.14 or newer**.
+107 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+checks. Version 0.6.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
-Both exact versions are checked with independently installed archives. ESLint is not a supported host.
+All three exact versions are checked with independently installed archives. ESLint is not a supported host.
+
+Version 0.6.0 adds native Effect correctness and immutable accumulation checks.
+When upgrading from 0.5.0, use a supported Oxlint version and run the native
+Effect setup below after dependency installation.
 
 ## Install
 
-Install version 0.5.0 and save its exact version:
+Install version 0.6.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.5.0 oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.0 oxlint@1.89.0
 ```
 
-Version 0.5.0 adds the optional style preset and the host requirements above.
-Published 0.4.0 keeps its earlier host list. Consumer adoption is a separate step.
+Version 0.6.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
+keep their earlier host lists. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
 archives remain separate distribution artefacts; a GitHub release does not publish
@@ -59,6 +63,39 @@ the subpaths below. For example, a JSON configuration can enable one rule:
 }
 ```
 
+## Native Effect correctness
+
+Both `effect` and `strict` include every check in the pinned
+`@effect/tsgo` **0.55.0** correctness preset, all at error level. This catches
+forgotten Effect programs, incorrect generator yields, unhandled errors and
+requirements, unchecked Effect type assertions, missing Schema class brands and
+unstable APIs. Type-aware checking is enabled by the group itself; consumers
+do not need to import another preset. Upstream's unrelated style and maintainer
+preferences are not added to the public group.
+
+The package installs `@effect/tsgo` and `oxlint-tsgolint` **7.0.2004** as exact
+regular dependencies. After installing the package,
+prepare the locally installed Oxlint binaries:
+
+```sh
+npx --no-install effect-tsgo patch --no-typescript --oxlint
+npx --no-install oxlint --deny-warnings .
+```
+
+Repeat the patch after dependency installation, normally in the consuming
+project's existing `prepare` command. `--no-typescript` keeps this setup focused
+on Oxlint; a separate TypeScript compiler installation is not needed for the
+patch. Missing native setup causes a configuration error. It never silently
+falls back to the custom syntax checks. The checker supports exactly the three
+Oxlint versions above; 1.86.0 is no longer supported in version 0.6.0.
+
+Keep a normal `tsconfig.json` covering the checked files. Native diagnostic
+options, such as exact unstable APIs approved for particular test files, live
+under the `@effect/language-service` compiler plugin configuration. Leave its
+`diagnostics` option false when Oxlint owns reporting. The archive tests prove
+that forgotten work fails even without `--deny-warnings` and without a caller
+adding `--type-aware`.
+
 ## Optional style preset
 
 Add `style` before `strict`, then keep the project's own policy last:
@@ -74,8 +111,7 @@ export default defineConfig({ extends: [style, strict, project] });
 Run `oxlint --type-aware --deny-warnings .`. `style` also works alone and is
 available as the default export of `@commonplaces/oxlint-plugin/style`.
 It never imports or extends `strict`; `strict` still contains only its original
-six groups. Adding this release without selecting `style` leaves strict checks
-unchanged. This preset includes more than formatting preferences: Ultracite
+six groups. Adding `style` leaves strict settings unchanged. This preset includes more than formatting preferences: Ultracite
 also supplies accessibility, test and correctness checks, browser globals,
 shared ignores and test-file overrides. Its ignores can reduce which files are
 checked; keep the project's own file policy explicit.
@@ -107,6 +143,37 @@ size limits remain in each consumer's project policy.
 | `no-inline-comments`                  | Allow short explanations beside the code they describe.                                                                          |
 | `typescript/consistent-return`        | Leave return types and Effect generator branches to TypeScript.                                                                  |
 
+### Effect compatibility
+
+Style must accept the code required by strict Effect. Putting `strict` last
+only resolves two settings for the same rule; it cannot stop a different style
+rule asking for forbidden code. For example, `typescript/promise-function-async`
+asks for `async` on a host callback that returns `Effect.runPromise(...)`, while
+both strict async checks reject the added keyword. Return the Promise directly
+at the approved host boundary. Keep ordinary application work in Effect.
+
+The preset turns off these additional style rules, including when used alone:
+
+| Rules set to `off`                                                              | Reason                                                                                         |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `require-await`, `typescript/promise-function-async`, `typescript/return-await` | Do not ask for `async` or `await`. Strict rules own Promise boundaries.                        |
+| `promise/prefer-await-to-callbacks`, `promise/prefer-await-to-then`             | Do not replace callbacks or Promise chains with `await`; use Effect at the owning adapter.     |
+| `typescript/prefer-for-of`, `unicorn/no-array-reduce`                           | Do not suggest loops. Allow Effect's immutable `Array.reduce`, including renamed imports.      |
+| `oxc/no-accumulating-spread`                                                    | Its mutation advice is replaced by `strict-effect/no-copying-accumulator` in the Effect group. |
+| `unicorn/prefer-at`                                                             | Use checked Effect collection access instead of native `.at`.                                  |
+| `unicorn/prefer-date-now`                                                       | Use Effect's clock instead of `Date.now`.                                                      |
+| `unicorn/prefer-reflect-apply`                                                  | Do not suggest `Reflect.apply`, which strict rejects.                                          |
+| `unicorn/prefer-set-has`                                                        | Use Effect collections instead of suggesting a native mutable `Set`.                           |
+| `typescript/non-nullable-type-assertion-style`                                  | Do not replace a type assertion with `!`; strict rejects both unchecked forms.                 |
+| `unicorn/prefer-ternary`                                                        | Do not request ternaries while strict's `no-ternary` is enabled.                               |
+| `max-classes-per-file`                                                          | Keep related Schema error classes or service contracts in their owning module.                 |
+
+These changes do not grant runtime, SDK or Promise permissions. Keep exact host
+files in the project's policy. Strict still rejects async/await, raw Promises,
+loops, mutation, unchecked access, thrown failures and unapproved runtime calls.
+The collection convention accepts `Array.reduce(initial, callback)(values)`;
+its three-argument form `Array.reduce(values, initial, callback)` still fails.
+
 ### Supported-host adjustments
 
 The imported configurations need two small adjustments; these are separate
@@ -120,10 +187,14 @@ from the eleven shared overrides above:
 - Vitest's file override disabling `vitest/valid-title` is also omitted, so
   strict's correctness setting still applies inside test files.
 
-The tests install the packed archive on both supported hosts and compare
+The tests install the packed archive on every supported host and compare
 every resolved strict rule, including its options, with `[style, strict]`.
-They also check inherited file overrides. These adjustments import no strict
-settings and leave every other upstream setting intact.
+They also check inherited file overrides. Type-aware archive tests compile and
+lint approved host callbacks, SDK adapters, Effect programs, immutable
+collections and related error classes. Restoring the async style rule makes the
+host example fail, proving the type-aware check runs. Forbidden examples must
+retain every strict diagnostic after style is added. The adjustments import no
+strict settings; other upstream settings remain intact.
 
 ### Ultracite 8.0.1 comparison
 
@@ -144,7 +215,8 @@ Both versions contain `no-unmodified-loop-condition` with
 `checkConditionalExpressions: true`; the supported hosts accept that option.
 Ultracite 8 requires Oxlint 1.86 or newer, so 1.80 and 1.85 are no longer
 supported. Its Oxfmt peer requires at least 0.71; repository tooling uses 0.74.0.
-The archive is checked on exactly 1.86.0 and the current 1.89.0.
+The current archive is checked on exactly 1.87.0, 1.88.0 and 1.89.0, matching the
+pinned native Effect checker. Published 0.5.0 was qualified on 1.86.0 and 1.89.0.
 
 ## Project settings
 
@@ -224,11 +296,38 @@ Alchemy checks use `alchemy-secrets/`. Keep those names when moving from copied
 rule files. Remove the copied implementations and change `jsPlugins` to the
 package subpaths; keep your existing rule settings.
 
+## Immutable accumulation
+
+`effect` and `strict` enable `strict-effect/no-copying-accumulator` as an error.
+It catches repeated array accumulator spreads, growing object spreads, copying
+`Array.append`/`prepend`/`appendAll`/`prependAll`/`union`/`copy` calls and
+`Record.set`/`union` calls in Effect reducers. Repeatedly copying an ever larger
+result can make a modest input expensive to process.
+
+Use `Array.map` or `Array.flatMap` to produce an array. Use `Record.fromEntries`
+to build a record in one pass. When genuine accumulation is needed, use
+persistent `Chunk.append`, `HashMap.set` or `HashSet.add`, which share existing
+structure. The rule never suggests mutation and has no automatic fix.
+
+It recognises imported Effect `reduce`, `reduceRight`, `scan` and `scanRight`
+operations, including named, namespace, renamed and immutable aliased imports.
+Both argument orders and locally declared callbacks are covered. It follows
+accumulator aliases, fields and destructured fields, checks copied values by
+their actual local binding, and recognises a copier as the first pipe operation.
+Shadowed names, unrelated libraries, scalar folds, spreads of the current input
+and fixed-shape object spreads remain valid. `Array.fromIterable` is allowed: the
+installed Effect version reuses an input array rather than copying it.
+
+This is a local written-pattern check. It does not follow imported callbacks,
+opaque helper implementations, mutable aliases or an accumulator through later
+pipe operations, and it does not measure input sizes or prove a runtime cost.
+Native loops and mutation remain forbidden by the separate strict rules.
+
 ## Rule exports
 
 | Package subpath     | Rule prefix           | Rules |
 | ------------------- | --------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`      |    29 |
+| `/strict-effect`    | `strict-effect/`      |    30 |
 | `/effect`           | `effect/`             |     9 |
 | `/alchemy`          | `alchemy-secrets/`    |     3 |
 | `/bun`              | `bun/`                |     1 |

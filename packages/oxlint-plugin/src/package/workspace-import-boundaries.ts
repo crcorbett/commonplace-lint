@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 import type { Context, ESTree } from "@oxlint/plugins";
-import { Array, Number, Option, Predicate, Record, Schema } from "effect";
+import { Array, Chunk, Number, Option, Predicate, Record, Schema } from "effect";
 import { variableInScope } from "../syntax.js";
 
 // A checked manifest consumer selects export conditions before configuring this
@@ -202,18 +202,18 @@ const moduleAddress = (
   );
 };
 const resolvePath = (base: string, address: string): string =>
-  Array.join(
+  Chunk.join(
     Array.reduce(
       address.split("/"),
-      base === "." || base === "" ? [] : base.split("/"),
+      Chunk.fromIterable(base === "." || base === "" ? [] : base.split("/")),
       (parts, part) =>
         part === ".."
-          ? parts.length === 0 || Option.contains(Array.last(parts), "..")
-            ? [...parts, ".."]
-            : Array.dropRight(parts, 1)
+          ? parts.length === 0 || Option.contains(Chunk.last(parts), "..")
+            ? Chunk.append(parts, "..")
+            : Chunk.dropRight(parts, 1)
           : part === "." || part === ""
             ? parts
-            : [...parts, part],
+            : Chunk.append(parts, part),
     ),
     "/",
   );

@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 import type { Context, ESTree, Variable } from "@oxlint/plugins";
-import { Array, Option, Predicate, Record, Schema } from "effect";
+import { Array, HashMap, Option, Predicate, Record, Schema } from "effect";
 import { childNodes, propertyName, variableInScope } from "./syntax.js";
 
 const RuleId = Schema.String.check(Schema.isPattern(/^\S+$/u));
@@ -71,7 +71,7 @@ const staticProperties = (
     Option.filter((value) => value.type === "ObjectExpression"),
     Option.flatMap((value) => {
       if (value.type !== "ObjectExpression") return Option.none();
-      const empty: Readonly<Record<string, ObjectProperty>> = {};
+      const empty = HashMap.empty<string, ObjectProperty>();
       return Option.some(
         Array.reduce(value.properties, empty, (known, entry) => {
           if (entry.type !== "Property") return empty;
@@ -82,9 +82,9 @@ const staticProperties = (
             : propertyName(entry.key);
           return Option.match(key, {
             onNone: () => empty,
-            onSome: (name) => Record.set(known, name, entry),
+            onSome: (name) => HashMap.set(known, name, entry),
           });
-        }),
+        }).pipe(HashMap.toEntries, Record.fromEntries),
       );
     }),
   );

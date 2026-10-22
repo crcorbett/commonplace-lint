@@ -27,6 +27,26 @@ const style: OxlintConfig = {
     },
   ],
   rules: {
+    // Effect owns asynchronous work. Host callbacks may return a Promise
+    // directly without adding async, await or a Promise chain.
+    "require-await": "off",
+    "typescript/promise-function-async": "off",
+    "typescript/return-await": "off",
+    "promise/prefer-await-to-callbacks": "off",
+    "promise/prefer-await-to-then": "off",
+    // These rewrites suggest loops, mutation or native APIs that strict Effect
+    // rejects. Immutable Effect operations remain checked by the strict rules.
+    "typescript/prefer-for-of": "off",
+    "typescript/non-nullable-type-assertion-style": "off",
+    "oxc/no-accumulating-spread": "off",
+    "unicorn/no-array-reduce": "off",
+    "unicorn/prefer-at": "off",
+    "unicorn/prefer-date-now": "off",
+    "unicorn/prefer-reflect-apply": "off",
+    "unicorn/prefer-set-has": "off",
+    "unicorn/prefer-ternary": "off",
+    // An errors or service module may own several related Schema classes.
+    "max-classes-per-file": "off",
     "unicorn/no-array-for-each": "off",
     "unicorn/no-array-sort": "off",
     "unicorn/throw-new-error": "off",

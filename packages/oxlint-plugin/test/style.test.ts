@@ -1,4 +1,5 @@
 import { expect, it } from "@effect/vitest";
+import { correctness } from "@effect/tsgo/oxlint-presets";
 import {
   general,
   effect,
@@ -15,7 +16,7 @@ import core from "ultracite/oxlint/core";
 import react from "ultracite/oxlint/react";
 import vitest from "ultracite/oxlint/vitest";
 
-it("composes exactly the upstream presets and the eleven shared overrides", () => {
+it("composes the upstream presets with shared and Effect compatibility overrides", () => {
   expect(styleSubpath).toBe(style);
   expect(style).toEqual({
     extends: [
@@ -37,6 +38,21 @@ it("composes exactly the upstream presets and the eleven shared overrides", () =
       },
     ],
     rules: {
+      "require-await": "off",
+      "typescript/promise-function-async": "off",
+      "typescript/return-await": "off",
+      "promise/prefer-await-to-callbacks": "off",
+      "promise/prefer-await-to-then": "off",
+      "typescript/prefer-for-of": "off",
+      "typescript/non-nullable-type-assertion-style": "off",
+      "oxc/no-accumulating-spread": "off",
+      "unicorn/no-array-reduce": "off",
+      "unicorn/prefer-at": "off",
+      "unicorn/prefer-date-now": "off",
+      "unicorn/prefer-reflect-apply": "off",
+      "unicorn/prefer-set-has": "off",
+      "unicorn/prefer-ternary": "off",
+      "max-classes-per-file": "off",
       "unicorn/no-array-for-each": "off",
       "unicorn/no-array-sort": "off",
       "unicorn/throw-new-error": "off",
@@ -55,4 +71,14 @@ it("composes exactly the upstream presets and the eleven shared overrides", () =
 it("keeps strict separate and preserves every strict setting", () => {
   expect(strict).toEqual({ extends: [general, effect, alchemy, conventions, web, typescript] });
   expect(strict).toMatchSnapshot();
+});
+
+it("includes all native Effect correctness checks at error level in effect and strict", () => {
+  expect(effect.options?.typeAware).toBe(true);
+  expect(effect.plugins).toEqual(expect.arrayContaining(["effecttsgo"]));
+  const native = Record.toEntries<string, unknown>(correctness.rules ?? {});
+  const installed = Record.toEntries<string, unknown>(effect.rules ?? {});
+  expect(native).toHaveLength(26);
+  Array.forEach(native, ([name]) => expect(installed).toContainEqual([name, "error"]));
+  expect(strict.extends).toContain(effect);
 });

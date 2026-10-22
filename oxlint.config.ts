@@ -8,6 +8,7 @@ export default defineConfig({
   ignorePatterns: ["tools/oxlint/fixtures/**"],
   rules: {
     ...effectRecommended.rules,
+    ...effect.rules,
     "strict-effect/no-imperative-collections": "error",
     "effect/no-runtime-execution-outside-main": "error",
     "max-lines": ["error", { max: 500, skipBlankLines: true, skipComments: true }],

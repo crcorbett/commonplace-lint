@@ -1,6 +1,6 @@
 import { defineRule } from "@oxlint/plugins";
 import type { Context, ESTree } from "@oxlint/plugins";
-import { Array, Option, Schema } from "effect";
+import { Array, Chunk, Option, Schema } from "effect";
 import { constant, operation, referenceOf, valueOf } from "./native-reference.js";
 import { childNodes, propertyName, variableInScope } from "./syntax.js";
 
@@ -36,16 +36,18 @@ const adapted = (
     Option.exists((reference) =>
       Array.some(adapters, (adapter) => {
         const relative = reference.module.startsWith(".")
-          ? Array.join(
+          ? Chunk.join(
               Array.reduce(
                 reference.module.split("/"),
-                Array.dropRight(context.filename.replaceAll("\\", "/").split("/"), 1),
+                Chunk.fromIterable(
+                  Array.dropRight(context.filename.replaceAll("\\", "/").split("/"), 1),
+                ),
                 (parts, segment) =>
                   segment === ".."
-                    ? Array.dropRight(parts, 1)
+                    ? Chunk.dropRight(parts, 1)
                     : segment === "."
                       ? parts
-                      : [...parts, segment],
+                      : Chunk.append(parts, segment),
               ),
               "/",
             )
