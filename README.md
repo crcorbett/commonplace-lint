@@ -24,10 +24,10 @@ automatically. Preserve existing hooks and build tasks in that script. See
 for the complete setup and supported compiler versions. Consumer adoption is a
 separate step.
 
-The verified npm `latest` is 0.6.0. See [the publication record](docs/evidence/2026-10-22-npm-060.md)
-for the exact source, matching archive, provenance and fresh consumer checks.
-The [0.5.0 record](docs/evidence/2026-10-21-npm-050.md) preserves the earlier
-release checks. npm installation does not depend on a GitHub archive mirror.
+The verified npm `latest` is 0.6.1. See [the publication record](docs/evidence/2026-10-22-npm-061.md)
+for the local publication, matching archive and fresh consumer checks.
+The [0.6.0 record](docs/evidence/2026-10-22-npm-060.md) preserves the earlier
+trusted publishing and provenance checks. npm installation does not depend on a GitHub archive mirror.
 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`

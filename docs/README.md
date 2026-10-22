@@ -32,3 +32,5 @@ checked at a particular commit; they do not replace the current runbook.
 - [npm 0.5.0 release](evidence/2026-10-21-npm-050.md) — 21 October 2026; trusted publication, matching archive bytes, public host tests, signatures and GitHub release.
 
 - [npm 0.6.0 release](evidence/2026-10-22-npm-060.md) — 22 October 2026; native Effect correctness, immutable accumulation, matching public archive, three supported Oxlint versions and verified signatures.
+
+- [npm 0.6.1 release](evidence/2026-10-22-npm-061.md) — 22 October 2026; local publication, automatic TypeScript and Oxlint prepare, matching public archive and fresh consumer checks.
