@@ -1,5 +1,14 @@
 # @commonplaces/oxlint-plugin
 
+## 0.6.1
+
+### Patch Changes
+
+- Document Effect's automatic root prepare script for both TypeScript and Oxlint.
+  Keep existing prepare tasks and strict rule settings. Qualify the actual archive
+  with a normal install that runs prepare and prove the patched compiler catches
+  forgotten Effect work.
+
 ## 0.6.0
 
 ### Minor Changes

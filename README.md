@@ -1,7 +1,7 @@
 # Commonplace Lint
 
 107 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
-`@commonplaces/oxlint-plugin`. Version 0.6.0 supports Oxlint **1.87.0, 1.88.0 or 1.89.0** and Node
+`@commonplaces/oxlint-plugin`. Version 0.6.1 supports Oxlint **1.87.0, 1.88.0 or 1.89.0** and Node
 **22.14 or newer**. Licensed under MIT.
 
 Version 0.6.0 adds all 26 native Effect correctness checks as errors and an
@@ -10,16 +10,19 @@ patterns without asking for forbidden async functions, loops or mutation.
 
 ## Install
 
-Install version 0.6.0 and save the exact version:
+Install version 0.6.1 and save the exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.0 oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.1 \
+  @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
 ```
 
-After installation, run `npx --no-install effect-tsgo patch --no-typescript
---oxlint`. Repeat this in the consuming project's `prepare` command after each
-dependency install. See [native Effect setup](packages/oxlint-plugin/README.md#native-effect-correctness).
-Consumer adoption is a separate step.
+Add `effect-tsgo patch --oxlint` to the consuming project's root `prepare`
+script so dependency installation prepares both TypeScript and Oxlint
+automatically. Preserve existing hooks and build tasks in that script. See
+[native Effect setup](packages/oxlint-plugin/README.md#native-effect-correctness)
+for the complete setup and supported compiler versions. Consumer adoption is a
+separate step.
 
 The verified npm `latest` is 0.6.0. See [the publication record](docs/evidence/2026-10-22-npm-060.md)
 for the exact source, matching archive, provenance and fresh consumer checks.

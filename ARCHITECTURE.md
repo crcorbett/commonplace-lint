@@ -74,9 +74,11 @@ arguments before its input, while map needs one.
 The `effect` group includes upstream's native correctness preset, with all 26
 rules promoted to errors and type-aware linting enabled. `strict` inherits it.
 The package ships pinned `@effect/tsgo` and `oxlint-tsgolint` dependencies.
-Consumers run `effect-tsgo patch --no-typescript --oxlint` after installation to
-prepare their local linter binaries; selecting the group without that setup
-fails instead of silently losing checks. No Effect runtime runs in the package.
+Consumers retain `effect-tsgo patch --oxlint` in the root `prepare` script so
+installation prepares both their supported TypeScript compiler and Oxlint.
+Preserve existing prepare tasks. A deliberate script-free dependency refresh
+requires the same patch before checking code. Selecting the group without
+native setup fails instead of silently losing checks. No Effect runtime runs in the package.
 Archive tests use each supported host, prove missing setup fails, check native
 diagnostics without extra command-line severity/type-aware flags, and check
 approved Effect tests alongside forbidden code.
