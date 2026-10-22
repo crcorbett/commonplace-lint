@@ -1,7 +1,7 @@
 # @commonplaces/oxlint-plugin
 
 107 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. Version 0.6.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
+checks. Version 0.6.1 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
 All three exact versions are checked with independently installed archives. ESLint is not a supported host.
@@ -12,13 +12,14 @@ Effect setup below after dependency installation.
 
 ## Install
 
-Install version 0.6.0 and save its exact version:
+Install version 0.6.1 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.0 oxlint@1.89.0
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.1 \
+  @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
 ```
 
-Version 0.6.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
+Version 0.6.1 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
 keep their earlier host lists. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
@@ -73,21 +74,46 @@ unstable APIs. Type-aware checking is enabled by the group itself; consumers
 do not need to import another preset. Upstream's unrelated style and maintainer
 preferences are not added to the public group.
 
-The package installs `@effect/tsgo` and `oxlint-tsgolint` **7.0.2004** as exact
-regular dependencies. After installing the package,
-prepare the locally installed Oxlint binaries:
+The package ships `@effect/tsgo` **0.55.0** and `oxlint-tsgolint` **7.0.2004**
+as exact regular dependencies. Full Effect projects should also declare their
+compiler and checker tools directly, as in the install command above. This
+keeps the selected local tools explicit. The pinned checker supports TypeScript
+**7.0.2** or **7.1.0-dev.20261019.1**, alongside the three Oxlint versions above.
+The archive tests use TypeScript 7.0.2.
+Check the installed checker's supported versions before changing these tools.
 
-```sh
-npx --no-install effect-tsgo patch --no-typescript --oxlint
-npx --no-install oxlint --deny-warnings .
+Use [Effect's recommended automatic setup](https://github.com/Effect-TS/tsgo/blob/main/docs/README.md).
+Add this command to the consuming project's root `package.json`:
+
+```json
+{
+  "scripts": {
+    "prepare": "effect-tsgo patch --oxlint"
+  }
+}
 ```
 
-Repeat the patch after dependency installation, normally in the consuming
-project's existing `prepare` command. `--no-typescript` keeps this setup focused
-on Oxlint; a separate TypeScript compiler installation is not needed for the
-patch. Missing native setup causes a configuration error. It never silently
-falls back to the custom syntax checks. The checker supports exactly the three
-Oxlint versions above; 1.86.0 is no longer supported in version 0.6.0.
+Merge the patch command into an existing `prepare` script with `&&`; retain its
+hooks, code generation and build tasks. Add it once at the repository root.
+Run `npm install` after editing the script. Future installs, including clean
+CI installs, run it automatically. Then run the project's normal strict
+TypeScript and Oxlint commands, including `oxlint --deny-warnings .`.
+
+This prepares both the TypeScript compiler and Oxlint. Do not use
+`--no-typescript` for a full Effect project. That option is only for an explicit
+Oxlint-only host which has no supported native TypeScript compiler; record that
+host constraint rather than making it the shared default. Do not use
+`--skip-missing` to hide missing tools or incompatible versions.
+
+For initial configuration, the installed `effect-tsgo setup` command can guide
+TypeScript, Oxlint and editor setup. Review its proposed changes against the
+project's existing strict rules and exact dependency versions. Keep the shared
+presets and all project-specific restrictions active.
+
+If a deliberate install or lint-package refresh uses `--ignore-scripts`, run
+`effect-tsgo patch --oxlint` explicitly after that operation and before checking
+code. An earlier successful prepare does not cover replaced binaries. Missing
+native setup causes a configuration error rather than silently losing checks.
 
 Keep a normal `tsconfig.json` covering the checked files. Native diagnostic
 options, such as exact unstable APIs approved for particular test files, live

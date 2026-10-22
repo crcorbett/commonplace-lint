@@ -80,17 +80,19 @@ Array.forEach(["1.87.0", "1.88.0", "1.89.0"], (version) =>
         ).toBe(false);
         yield* fs.writeFileString(
           `${directory}/package.json`,
-          '{"name":"lint-consumer","private":true,"type":"module"}',
+          '{"name":"lint-consumer","private":true,"type":"module","scripts":{"prepare":"effect-tsgo patch --oxlint"}}',
         );
-        // Install the actual archive. Registry downloads need no npm account and scripts are disabled.
+        // Deliberately skip prepare first so missing setup remains a failing control.
         yield* success(directory, "npm", [
           "install",
           "--ignore-scripts",
+          "--save-exact",
           "--no-audit",
           "--no-fund",
           "--package-lock=false",
           `${directory}/${archive.filename}`,
           `oxlint@${version}`,
+          "typescript@7.0.2",
           "@effect/vitest@4.0.5",
           "vitest@5.0.5",
         ]);
@@ -139,17 +141,43 @@ assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, w
         ]);
         expect(unpatched.exitCode).not.toBe(0);
         expect(unpatched.stdout + unpatched.stderr).toContain("effecttsgo");
-        yield* success(directory, `${directory}/node_modules/.bin/effect-tsgo`, [
-          "patch",
-          "--no-typescript",
-          "--oxlint",
+        const compiler = `${directory}/node_modules/.bin/tsc`;
+        yield* fs.writeFileString(
+          `${directory}/compiler-proof.ts`,
+          'import { Effect } from "effect"; Effect.succeed("forgotten");',
+        );
+        yield* fs.writeFileString(
+          `${directory}/tsconfig.compiler-proof.json`,
+          '{"compilerOptions":{"strict":true,"module":"Preserve","moduleResolution":"Bundler","target":"ES2024","skipLibCheck":true,"noEmit":true,"plugins":[{"name":"@effect/language-service","diagnostics":true,"diagnosticSeverity":{"floatingEffect":"error"},"ignoreEffectErrorsInTscExitCode":false}]},"files":["compiler-proof.ts"]}',
+        );
+        // Ordinary TypeScript accepts this; the prepared Effect compiler must fail.
+        yield* success(directory, compiler, ["--project", "tsconfig.compiler-proof.json"]);
+        const prepared = yield* success(directory, "npm", [
+          "install",
+          "--ignore-scripts=false",
+          "--no-audit",
+          "--no-fund",
+          "--package-lock=false",
         ]);
+        expect(prepared).toContain("Patched typescript at");
+        expect(prepared).toContain("Patched oxlint at");
+        const compilerRejected = yield* command(directory, compiler, [
+          "--project",
+          "tsconfig.compiler-proof.json",
+        ]);
+        expect(
+          compilerRejected.exitCode,
+          compilerRejected.stdout || compilerRejected.stderr,
+        ).not.toBe(0);
+        expect(compilerRejected.stdout + compilerRejected.stderr).toContain("floatingEffect");
+        yield* fs.remove(`${directory}/compiler-proof.ts`);
+        yield* fs.remove(`${directory}/tsconfig.compiler-proof.json`);
         yield* fs.writeFileString(
           `${directory}/tsconfig.json`,
           '{"compilerOptions":{"strict":true,"module":"Preserve","moduleResolution":"Bundler","target":"ES2024","skipLibCheck":true},"include":["*.ts","*.tsx"]}',
         );
-        yield* checkStyleConsumer(directory, `${repository}node_modules/.bin/tsc`);
-        yield* checkNativeConsumer(directory, `${repository}node_modules/.bin/tsc`);
+        yield* checkStyleConsumer(directory, compiler);
+        yield* checkNativeConsumer(directory, compiler);
         yield* fs.writeFileString(
           `${directory}/oxlint.config.ts`,
           `import { defineConfig } from "oxlint";
@@ -160,7 +188,7 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
           `${directory}/usage.ts`,
           'import { defineConfig } from "oxlint"; import { general, effect, alchemy, style, strict as strictConfig } from "@commonplaces/oxlint-plugin"; import styleConfig from "@commonplaces/oxlint-plugin/style"; import strict from "@commonplaces/oxlint-plugin/strict-effect"; export const config = defineConfig({ extends: [style, strictConfig, styleConfig, general, effect, alchemy] }); export const ruleCount: number = Object.keys(strict.rules).length;',
         );
-        yield* success(directory, `${repository}node_modules/.bin/tsc`, [
+        yield* success(directory, compiler, [
           "--ignoreConfig",
           "--noEmit",
           "--skipLibCheck",
