@@ -108,7 +108,7 @@ export const contractRules = {
       ImportDeclaration(node) {
         if (
           /(?:^|\/)(?:services?|schemas?|errors|config)\.ts$/u.test(context.filename) &&
-          /^(?:node:|bun$|playwright$|lighthouse$|chrome-launcher$|alchemy(?:\/|$)|@cloudflare(?:\/|$)|cloudflare$|@octokit(?:\/|$)|@actions(?:\/|$)|@sentry(?:\/|$)|stripe$|resend$|@aws(?:\/|$)|aws-sdk$)/u.test(
+          /^(?:node:|bun$|playwright$|lighthouse$|chrome-launcher$|alchemy(?:\/|$)|@alchemy\.run\/|@cloudflare(?:\/|$)|cloudflare$|@octokit(?:\/|$)|@actions(?:\/|$)|@sentry(?:\/|$)|stripe$|resend$|@aws(?:\/|$)|aws-sdk$)/u.test(
             node.source.value,
           )
         )

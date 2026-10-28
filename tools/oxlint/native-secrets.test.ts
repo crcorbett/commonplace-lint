@@ -169,6 +169,7 @@ it.effect(
     Effect.forEach(
       [
         valid,
+        valid.replaceAll("alchemy/Doppler", "@alchemy.run/doppler"),
         `${imports}\nexport const read = (Doppler: typeof unrelated, Secrets: typeof unrelated) => [Doppler.Secrets(), Secrets.ProcessEnv()];`,
         `import type { Secrets } from "alchemy"; export const example = "doppler run";`,
       ],
@@ -187,10 +188,13 @@ it.effect(
   "rejects the reversed list, implicit or enabled shell, missing stack settings and opaque spreads",
   () =>
     Effect.forEach(
-      invalid,
+      Array.flatMap(
+        [imports, imports.replaceAll("alchemy/Doppler", "@alchemy.run/doppler")],
+        (providerImports) => Array.map(invalid, (source) => `${providerImports}\n${source}`),
+      ),
       (source) =>
         Effect.gen(function* () {
-          const result = yield* lint(`${imports}\n${source}`, "alchemy.run.ts");
+          const result = yield* lint(source, "alchemy.run.ts");
           expect(result.exitCode).not.toBe(0);
           expect(result.report.number_of_files).toBe(1);
           expect(result.report.diagnostics.length).toBeGreaterThan(0);

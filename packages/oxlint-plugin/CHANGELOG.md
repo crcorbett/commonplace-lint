@@ -1,5 +1,11 @@
 # @commonplaces/oxlint-plugin
 
+## 0.6.2
+
+### Patch Changes
+
+- Recognise Alchemy beta.84 provider imports when checking Doppler secret source order, portable contracts and service instrumentation, while retaining support for earlier Alchemy releases.
+
 ## 0.6.1
 
 ### Patch Changes

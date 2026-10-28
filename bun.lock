@@ -23,7 +23,7 @@
     },
     "packages/oxlint-plugin": {
       "name": "@commonplaces/oxlint-plugin",
-      "version": "0.6.0",
+      "version": "0.6.2",
       "dependencies": {
         "@effect/tsgo": "0.55.0",
         "@oxlint/plugins": "1.89.0",
