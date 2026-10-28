@@ -174,6 +174,13 @@ export const conventionCases: readonly Case[] = [
       'import type { Effect } from "effect"; export interface Client { readonly read: Effect.Effect<void>; }',
   },
   {
+    rule: "no-host-api-in-contract",
+    file: "packages/example/src/service.ts",
+    invalid: 'import { Worker } from "@alchemy.run/cloudflare"; export { Worker };',
+    valid:
+      'import type { Effect } from "effect"; export interface Client { readonly read: Effect.Effect<void>; }',
+  },
+  {
     rule: "no-layer-export-in-service",
     file: "packages/example/src/service.ts",
     invalid: "export const ClientLive = layer;",

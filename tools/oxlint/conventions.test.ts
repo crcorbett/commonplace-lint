@@ -27,6 +27,14 @@ const cases: readonly Case[] = [
     rule: "require-service-operation-instrumentation",
     plugin: "effect",
     invalid:
+      'import { Content } from "./service"; import { Effect } from "effect"; export const x = Content.of({ read: Effect.void });',
+    valid:
+      'import { Worker } from "@alchemy.run/cloudflare"; export const x = Worker.of({ read: unknownOperation });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
       'import * as Services from "./service"; import { Effect } from "effect"; const { Content: C } = Services; export const x = C.of({ read: Effect.void });',
     valid:
       'import * as Services from "./service"; import { Effect } from "effect"; const { Content: C } = Services; export const x = C.of({ read: Effect.void.pipe(Effect.withSpan("Content.read")) });',

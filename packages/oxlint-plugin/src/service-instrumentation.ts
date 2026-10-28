@@ -82,7 +82,9 @@ const serviceOf = (
   if (Array.some(visited, (previous) => previous === node)) return Option.none();
   const next = [...visited, node];
   const imported = referenceOf(context, node).pipe(
-    Option.filter((reference) => !/^(?:effect|alchemy)(?:\/|$)/u.test(reference.module)),
+    Option.filter(
+      (reference) => !/^(?:(?:effect|alchemy)(?:\/|$)|@alchemy\.run\/)/u.test(reference.module),
+    ),
     Option.flatMap((reference) => reference.name),
     Option.filter((name) => /^[A-Z]/u.test(name)),
     Option.map((name) => ({ name, declaration: Option.none<ESTree.Class>() })),

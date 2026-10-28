@@ -320,7 +320,9 @@ accepted options; no marketplace plugin is needed to read or run them.
 The portable Effect checks use the existing `strict-effect/` names, and the
 Alchemy checks use `alchemy-secrets/`. Keep those names when moving from copied
 rule files. Remove the copied implementations and change `jsPlugins` to the
-package subpaths; keep your existing rule settings.
+package subpaths; keep your existing rule settings. The native-source rule
+recognises both `alchemy/Doppler` and the Alchemy beta.84 provider package
+`@alchemy.run/doppler`.
 
 ## Immutable accumulation
 

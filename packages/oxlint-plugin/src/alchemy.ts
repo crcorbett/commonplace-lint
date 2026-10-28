@@ -53,7 +53,8 @@ const nativeSources = defineRule({
     return {
       ArrayExpression(node) {
         const doppler = (element: ESTree.Node) =>
-          Option.isSome(providerCall(context, element, "alchemy/Doppler", "Secrets"));
+          Option.isSome(providerCall(context, element, "alchemy/Doppler", "Secrets")) ||
+          Option.isSome(providerCall(context, element, "@alchemy.run/doppler", "Secrets"));
         if (!Array.some(node.elements, (element) => element !== null && doppler(element))) return;
         const valid =
           node.elements.length === 3 &&
