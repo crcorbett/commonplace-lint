@@ -1,7 +1,7 @@
 # @commonplaces/oxlint-plugin
 
-107 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. Version 0.6.1 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
+108 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+checks. Version 0.7.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
 All three exact versions are checked with independently installed archives. ESLint is not a supported host.
@@ -12,14 +12,14 @@ Effect setup below after dependency installation.
 
 ## Install
 
-Install version 0.6.1 and save its exact version:
+Install version 0.7.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.6.1 \
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.7.0 \
   @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
 ```
 
-Version 0.6.1 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
+Version 0.7.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
 keep their earlier host lists. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
@@ -432,6 +432,23 @@ strings. Unresolved computed addresses are outside its proof. Explicit aliases
 are bounded directory prefixes; this is not a TypeScript, bundler, conditional
 export or symlink resolver. Same-owner asset queries are allowed; `file:` imports
 are unsupported and rejected. Invalid or contradictory options fail closed.
+
+### HTTP response-body error classification
+
+The `effect` and `strict` groups enable `strict-effect/http-client-error-classification`.
+Effect's HTTP `DecodeError` includes connection failures while reading a response
+body. Do not map every `DecodeError` to a payload/integrity failure while mapping
+`TransportError` to unavailability. Use the transport recovery path by default;
+distinguish deliberate size limits or other payload failures with a tagged cause.
+Keep malformed JSON/schema errors separate and test failure after response headers.
+
+The rule checks native `Match.tags`/`tagsExhaustive` tables containing
+`DecodeError`, `TransportError` and `StatusCodeError`. It rejects unconditional
+results using different error constructors, following immutable local aliases,
+simple return helpers and `Effect.fail`/`succeed`. Imported aliases and shadowing
+are respected. It does not prove conditional branches, opaque helpers, computed
+tables or other dispatch styles: behavioural tests still own their semantics.
+There are no project-specific names, configuration options or automatic fixes.
 
 ### Subprocess pipe capture
 

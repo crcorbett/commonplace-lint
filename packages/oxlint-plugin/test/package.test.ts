@@ -111,8 +111,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [30, 9, 3, 1, 3, 15, 1, 33, 12]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 107);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [31, 9, 3, 1, 3, 15, 1, 33, 12]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 108);
 for (const group of [general, effect, alchemy, conventions, web]) {
   for (const id of Object.keys(group.rules)) {
     if (id.startsWith("effecttsgo/")) continue;
@@ -347,12 +347,15 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
                 },
               ],
               "strict-effect/subprocess-pipe-capture": "error",
+              "strict-effect/http-client-error-classification": "error",
             },
           }),
         );
         yield* fs.writeFileString(
           `${directory}/boundary-valid.ts`,
-          'import "@archive/service/service";' + archiveCapture(true),
+          'import "@archive/service/service";' +
+            archiveCapture(true) +
+            'import { Match } from "effect"; class Unavailable {} export const map = Match.tagsExhaustive({ DecodeError: () => new Unavailable(), TransportError: () => new Unavailable(), StatusCodeError: () => new Unavailable() });',
         );
         const boundaryValid = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
           "--config",
@@ -387,6 +390,12 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
             file: "boundary-sequential.ts",
             source: archiveCapture(false),
             code: "strict-effect(subprocess-pipe-capture)",
+          },
+          {
+            file: "boundary-http-body.ts",
+            source:
+              'import { Match } from "effect"; class Integrity {} class Unavailable {} export const map = Match.tagsExhaustive({ DecodeError: () => new Integrity(), TransportError: () => new Unavailable(), StatusCodeError: () => new Unavailable() });',
+            code: "strict-effect(http-client-error-classification)",
           },
         ];
         yield* Effect.forEach(
