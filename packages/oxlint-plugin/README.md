@@ -200,6 +200,15 @@ loops, mutation, unchecked access, thrown failures and unapproved runtime calls.
 The collection convention accepts `Array.reduce(initial, callback)(values)`;
 its three-argument form `Array.reduce(values, initial, callback)` still fails.
 
+`strict-effect/no-promise-workflow` also rejects every runtime `import()` expression,
+including imports wrapped in `Effect.tryPromise` and imports in exact
+`allowedFiles` or `promiseOnlyFiles` owners. Those permissions adapt host Promise
+contracts; they do not permit dynamic module loading. Use static imports and
+defer service initialisation through native Effect or Atom lifetimes where needed.
+Static imports, re-exports and TypeScript-only `import("module").Type` references
+remain valid. Framework-generated output stays subject to the consumer's existing
+generated-file exclusions; there is no adapter exception to this prohibition.
+
 ### Supported-host adjustments
 
 The imported configurations need two small adjustments; these are separate

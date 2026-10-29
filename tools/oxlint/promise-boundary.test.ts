@@ -5,7 +5,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 const Report = Schema.fromJsonString(
   Schema.Struct({
-    diagnostics: Schema.Array(Schema.Struct({ code: Schema.String })),
+    diagnostics: Schema.Array(Schema.Struct({ code: Schema.String, message: Schema.String })),
     number_of_files: Schema.Int,
   }),
 );
@@ -96,6 +96,49 @@ const conversions: ReadonlyArray<string> = [
 ];
 
 describe("canonical Promise conversion boundary", () => {
+  it.effect("rejects dynamic imports even in exact adapters and host-contract tests", () =>
+    Effect.forEach(
+      targets,
+      (target) =>
+        Effect.forEach(
+          [
+            { allowed: [], contracts: [] },
+            { allowed: [target], contracts: [] },
+            { allowed: [], contracts: [target] },
+          ],
+          ({ allowed, contracts }) =>
+            lint(
+              `import * as Effect from "effect/Effect";
+export const direct = import("sdk");
+const moduleName = "sdk";
+export const computed = import(moduleName);
+export const attributed = import("./data.json", { with: { type: "json" } });
+export const wrapped = Effect.tryPromise({ try: () => import("sdk"), catch: () => "unavailable" });`,
+              target,
+              allowed,
+              contracts,
+            ).pipe(
+              Effect.tap((result) =>
+                Effect.sync(() => {
+                  expect(result.exitCode).toBe(1);
+                  expect(result.report.number_of_files).toBe(1);
+                  expect(
+                    Array.filter(
+                      result.report.diagnostics,
+                      ({ code, message }) =>
+                        code === "strict-effect(no-promise-workflow)" &&
+                        message.startsWith("Dynamic imports are forbidden"),
+                    ),
+                  ).toHaveLength(4);
+                }),
+              ),
+            ),
+          { concurrency: 1, discard: true },
+        ),
+      { concurrency: 1, discard: true },
+    ).pipe(Effect.provide(NodeServices.layer)),
+  );
+
   it.effect(
     "requires exact adapter ownership in every owned path",
     () =>
@@ -213,6 +256,8 @@ describe("canonical Promise conversion boundary", () => {
   it.effect("accepts native Effects and leaves unrelated or shadowed names alone", () =>
     Effect.forEach(
       [
+        'import { Client } from "sdk"; export { Client }; export type ClientType = import("sdk").Client;',
+        'export const example = \'import("sdk")\'; // import("sdk") is documentation, not execution.',
         'import { Effect } from "effect"; export const read = Effect.succeed(1).pipe(Effect.map((value) => value + 1));',
         'import * as Effect from "other-library"; export const read = Effect.promise();',
         'import { Effect } from "effect"; export const original = Effect.void; export const read = (Effect: { readonly promise: () => void }) => { const alias = Effect; return alias.promise(); };',
