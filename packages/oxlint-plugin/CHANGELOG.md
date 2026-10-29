@@ -1,5 +1,14 @@
 # @commonplaces/oxlint-plugin
 
+## 0.7.0
+
+### Minor Changes
+
+- Add `strict-effect/http-client-error-classification` to the Effect configuration.
+  Reject unconditional HTTP DecodeError mappings to a different domain error from
+  TransportError: Effect uses DecodeError for failed response-body reads as well as
+  payload decoding. Keep separately tagged payload failures distinguishable by cause.
+
 ## 0.6.2
 
 ### Patch Changes

@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 107 rules, six configuration groups and optional style
+       ├── src: 108 rules, six configuration groups and optional style
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -60,7 +60,7 @@ in the constructor fixture keeps it valid under the latest checker.
 workspace ownership and documentation links. Turbo inputs include root config
 read by each package task. `bun run pack` cleans and builds the package and
 writes a standard npm archive. Only dist, README, package.json and LICENSE are
-included. Tests prove accepted and rejected code, exported groups and all 107
+included. Tests prove accepted and rejected code, exported groups and all 108
 registrations outside the workspace.
 
 The optional style preset removes advice that conflicts with strict Effect,
