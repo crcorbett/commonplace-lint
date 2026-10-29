@@ -1423,6 +1423,8 @@ const noPromiseWorkflow = defineRule({
         "Use Effect for asynchronous work. Only an explicitly named host adapter may mention Promise; async, await and Promise chains remain forbidden there.",
       bridge:
         "Use a native Effect or Alchemy operation. Promise conversion belongs only in an explicitly named host or SDK adapter.",
+      dynamicImport:
+        "Dynamic imports are forbidden, including in host and SDK adapters. Use a static import; Effect and Atom may defer initialisation, not module loading.",
     },
   },
   create(context) {
@@ -1458,6 +1460,9 @@ const noPromiseWorkflow = defineRule({
       FunctionExpression: checkFunction,
       FunctionDeclaration: checkFunction,
       AwaitExpression: report,
+      ImportExpression(node) {
+        context.report({ node, messageId: "dynamicImport" });
+      },
       NewExpression(node) {
         if (isGlobalPromise(node.callee)) report(node);
       },

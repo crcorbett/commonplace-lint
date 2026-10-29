@@ -1,7 +1,7 @@
 # Commonplace Lint
 
 108 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
-`@commonplaces/oxlint-plugin`. Version 0.7.0 supports Oxlint **1.87.0, 1.88.0 or 1.89.0** and Node
+`@commonplaces/oxlint-plugin`. Version 0.8.0 supports Oxlint **1.87.0, 1.88.0 or 1.89.0** and Node
 **22.14 or newer**. Licensed under MIT.
 
 Version 0.6.0 adds all 26 native Effect correctness checks as errors and an
@@ -10,10 +10,10 @@ patterns without asking for forbidden async functions, loops or mutation.
 
 ## Install
 
-Install version 0.7.0 and save the exact version:
+Install version 0.8.0 and save the exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.7.0 \
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.8.0 \
   @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
 ```
 
