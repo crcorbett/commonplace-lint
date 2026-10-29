@@ -1,7 +1,7 @@
 # @commonplaces/oxlint-plugin
 
 108 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. Version 0.7.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
+checks. Version 0.8.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
 All three exact versions are checked with independently installed archives. ESLint is not a supported host.
@@ -12,14 +12,14 @@ Effect setup below after dependency installation.
 
 ## Install
 
-Install version 0.7.0 and save its exact version:
+Install version 0.8.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.7.0 \
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.8.0 \
   @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
 ```
 
-Version 0.7.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
+Version 0.8.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
 keep their earlier host lists. Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
