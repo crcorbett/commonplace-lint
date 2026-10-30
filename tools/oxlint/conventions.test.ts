@@ -27,6 +27,53 @@ const cases: readonly Case[] = [
     rule: "require-service-operation-instrumentation",
     plugin: "effect",
     invalid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ draft: { read: Effect.void } });',
+    valid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ draft: { read: Effect.fn("Orders.draft.read")(() => Effect.void) } });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ draft: { read: Effect.fn("Orders.read")(() => Effect.void) } });',
+    valid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; const read = Effect.void.pipe(Effect.withSpan("Orders.draft.read")); const draft = { read }; Orders.of({ draft });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
+      'import { Orders as O } from "./service"; import { Layer, Effect } from "effect"; Layer.mock(O, { session: { read: Effect.void } });',
+    valid:
+      'import { Orders as O } from "./service"; import { Layer, Effect } from "effect"; Layer.mock(O, { session: { read: Effect.void.pipe(Effect.withSpan("Orders.session.read")) } });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
+      'import { Orders } from "./service"; const session = { ...hidden }; Orders.of({ session });',
+    valid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; const read = Effect.fn("Orders.session.read")(() => Effect.void); Orders.of({ session: { read } });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
+      'import { Orders } from "./service"; const session = { child: session }; Orders.of({ session });',
+    valid:
+      'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ session: { child: { read: Effect.fn("Orders.session.child.read")(() => Effect.void) } } });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid: 'import { Orders } from "./service"; Orders.of({ session: {} });',
+    valid:
+      'import { Context, Effect } from "effect"; class Orders extends Context.Service<Orders, { readonly session: { readonly label: string; readonly read: () => Effect.Effect<void> } }>()("Orders") {} Orders.of({ session: { label: "active", read: Effect.fn("Orders.session.read")(() => Effect.void) } });',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
       'import { Content } from "./service"; import { Effect } from "effect"; export const x = Content.of({ read: Effect.void });',
     valid:
       'import { Worker } from "@alchemy.run/cloudflare"; export const x = Worker.of({ read: unknownOperation });',

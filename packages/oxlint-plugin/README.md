@@ -303,6 +303,11 @@ plus supplied operations in native `Layer.mock` replacements,
 preserving canonical names through named imports, namespace imports and immutable
 aliases. Shadowed names cannot borrow import identity. Every explicit operation
 requires its exact `Effect.fn("Orders.create")` or `Effect.withSpan` name.
+Readonly resource groups are traversed recursively, including local immutable
+aliases: `Orders.session.read` requires that full canonical span. Each supplied
+leaf in `Layer.mock` is checked too. Empty resource groups, cyclic groups,
+spreads and dynamic property names fail closed; local nested contract types
+continue to identify data and Stream members.
 Legacy `serviceNames` selection remains available for existing consumers.
 An empty selector is rejected.
 

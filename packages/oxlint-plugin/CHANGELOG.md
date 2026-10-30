@@ -1,5 +1,13 @@
 # @commonplaces/oxlint-plugin
 
+## 0.9.1
+
+### Patch Changes
+
+- Validate canonical spans at every leaf of nested service resource groups,
+  including immutable aliases and Layer.mock implementations. Reject empty,
+  cyclic and opaque groups without exempting uninstrumented operations.
+
 ## 0.9.0
 
 ### Minor Changes
