@@ -1,9 +1,9 @@
 # @commonplaces/oxlint-plugin
 
 108 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
-checks. Version 0.8.0 supports **Oxlint 1.87.0, 1.88.0 or 1.89.0** and **Node 22.14 or newer**.
+checks. Version 0.9.0 supports **Oxlint 1.88.0, 1.89.0 or 1.90.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
-the rule tests. The development tools use 1.89.0; consuming projects may use any supported version.
+the rule tests. The development tools use 1.90.0; consuming projects may use any supported version.
 All three exact versions are checked with independently installed archives. ESLint is not a supported host.
 
 Version 0.6.0 adds native Effect correctness and immutable accumulation checks.
@@ -12,15 +12,17 @@ Effect setup below after dependency installation.
 
 ## Install
 
-Install version 0.8.0 and save its exact version:
+Install version 0.9.0 and save its exact version:
 
 ```sh
-npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.8.0 \
-  @effect/tsgo@0.55.0 oxlint@1.89.0 oxlint-tsgolint@7.0.2004 typescript@7.0.2
+npm install --save-dev --save-exact @commonplaces/oxlint-plugin@0.9.0 \
+  @effect/tsgo@0.63.0 oxlint@1.90.0 oxlint-tsgolint@7.0.2005 typescript@7.0.2
 ```
 
-Version 0.8.0 supports exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. Older releases
-keep their earlier host lists. Consumer adoption is a separate step.
+Version 0.9.0 supports exactly Oxlint 1.88.0, 1.89.0 or 1.90.0. Older releases
+keep their earlier host lists. Version 0.9.0 removes 1.87.0 because the native
+Effect checker no longer supports it. Upgrade Oxlint before adopting this release.
+Consumer adoption is a separate step.
 
 The manifest and lockfile retain the resolved version. Historical GitHub release
 archives remain separate distribution artefacts; a GitHub release does not publish
@@ -67,18 +69,18 @@ the subpaths below. For example, a JSON configuration can enable one rule:
 ## Native Effect correctness
 
 Both `effect` and `strict` include every check in the pinned
-`@effect/tsgo` **0.55.0** correctness preset, all at error level. This catches
+`@effect/tsgo` **0.63.0** correctness preset, all at error level. This catches
 forgotten Effect programs, incorrect generator yields, unhandled errors and
 requirements, unchecked Effect type assertions, missing Schema class brands and
 unstable APIs. Type-aware checking is enabled by the group itself; consumers
 do not need to import another preset. Upstream's unrelated style and maintainer
 preferences are not added to the public group.
 
-The package ships `@effect/tsgo` **0.55.0** and `oxlint-tsgolint` **7.0.2004**
+The package ships `@effect/tsgo` **0.63.0** and `oxlint-tsgolint` **7.0.2005**
 as exact regular dependencies. Full Effect projects should also declare their
 compiler and checker tools directly, as in the install command above. This
 keeps the selected local tools explicit. The pinned checker supports TypeScript
-**7.0.2** or **7.1.0-dev.20261019.1**, alongside the three Oxlint versions above.
+**7.0.2**, **7.1.0-beta** or **7.1.0-dev.20261028.1**, alongside the three Oxlint versions above.
 The archive tests use TypeScript 7.0.2.
 Check the installed checker's supported versions before changing these tools.
 
@@ -250,7 +252,7 @@ Both versions contain `no-unmodified-loop-condition` with
 `checkConditionalExpressions: true`; the supported hosts accept that option.
 Ultracite 8 requires Oxlint 1.86 or newer, so 1.80 and 1.85 are no longer
 supported. Its Oxfmt peer requires at least 0.71; repository tooling uses 0.74.0.
-The current archive is checked on exactly 1.87.0, 1.88.0 and 1.89.0, matching the
+The current archive is checked on exactly 1.88.0, 1.89.0 and 1.90.0, matching the
 pinned native Effect checker. Published 0.5.0 was qualified on 1.86.0 and 1.89.0.
 
 ## Project settings
