@@ -335,33 +335,72 @@ export const requireServiceOperationInstrumentation = defineRule({
               context.report({ node, messageId: "unsupportedOperation" });
               return;
             }
-            Array.forEach(argument.value.properties, (property) => {
-              if (property.type !== "Property") {
-                context.report({ node: property, messageId: "unsupportedOperation" });
+            const check = (
+              object: ESTree.ObjectExpression,
+              prefix: string,
+              members: readonly ESTree.TSSignature[],
+              visited: readonly ESTree.Node[] = [],
+            ): void => {
+              if (
+                Array.contains(visited, object) ||
+                (visited.length > 0 && object.properties.length === 0)
+              ) {
+                context.report({ node: object, messageId: "unsupportedOperation" });
                 return;
               }
-              const key =
-                property.computed && property.key.type !== "Literal"
-                  ? Option.none<string>()
-                  : propertyName(property.key);
-              Option.match(key, {
-                onNone: () => context.report({ node: property, messageId: "unsupportedOperation" }),
-                onSome: (member) => {
-                  if (dataMember(context, fields, member) || streamValue(context, property.value))
-                    return;
-                  const name = `${owner.name}.${member}`;
-                  if (
-                    !instrumented(context, property.value, name) &&
-                    !adapted(context, property.value, name, options.operationAdapters ?? [])
-                  )
-                    context.report({
-                      node: property,
-                      messageId: "missingInstrumentation",
-                      data: { operation: name },
-                    });
-                },
+              Array.forEach(object.properties, (property) => {
+                if (property.type !== "Property") {
+                  context.report({ node: property, messageId: "unsupportedOperation" });
+                  return;
+                }
+                const key =
+                  property.computed && property.key.type !== "Literal"
+                    ? Option.none<string>()
+                    : propertyName(property.key);
+                Option.match(key, {
+                  onNone: () =>
+                    context.report({ node: property, messageId: "unsupportedOperation" }),
+                  onSome: (member) => {
+                    if (
+                      dataMember(context, members, member) ||
+                      streamValue(context, property.value)
+                    )
+                      return;
+                    const name = `${prefix}.${member}`;
+                    const value = valueOf(context, property.value);
+                    if (Option.isSome(value) && value.value.type === "ObjectExpression") {
+                      const nested = Array.findFirst(
+                        members,
+                        (field) =>
+                          field.type === "TSPropertySignature" &&
+                          Option.contains(propertyName(field.key), member),
+                      ).pipe(
+                        Option.flatMap((field) =>
+                          field.type === "TSPropertySignature"
+                            ? Option.fromNullishOr(field.typeAnnotation?.typeAnnotation)
+                            : Option.none(),
+                        ),
+                        Option.filter((type) => type.type === "TSTypeLiteral"),
+                        Option.map((type) => (type.type === "TSTypeLiteral" ? type.members : [])),
+                        Option.getOrElse(() => []),
+                      );
+                      check(value.value, name, nested, [...visited, object]);
+                      return;
+                    }
+                    if (
+                      !instrumented(context, property.value, name) &&
+                      !adapted(context, property.value, name, options.operationAdapters ?? [])
+                    )
+                      context.report({
+                        node: property,
+                        messageId: "missingInstrumentation",
+                        data: { operation: name },
+                      });
+                  },
+                });
               });
-            });
+            };
+            check(argument.value, owner.name, fields);
           },
         });
       },
