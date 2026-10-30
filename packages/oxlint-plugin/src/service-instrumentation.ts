@@ -341,7 +341,10 @@ export const requireServiceOperationInstrumentation = defineRule({
               members: readonly ESTree.TSSignature[],
               visited: readonly ESTree.Node[] = [],
             ): void => {
-              if (Array.contains(visited, object) || object.properties.length === 0) {
+              if (
+                Array.contains(visited, object) ||
+                (visited.length > 0 && object.properties.length === 0)
+              ) {
                 context.report({ node: object, messageId: "unsupportedOperation" });
                 return;
               }

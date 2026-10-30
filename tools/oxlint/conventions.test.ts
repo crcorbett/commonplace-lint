@@ -27,6 +27,14 @@ const cases: readonly Case[] = [
     rule: "require-service-operation-instrumentation",
     plugin: "effect",
     invalid:
+      'import { Orders } from "./service"; import { Layer } from "effect"; Layer.mock(Orders, { session: {} });',
+    valid:
+      'import { Orders } from "./service"; import { Layer } from "effect"; Layer.mock(Orders, {});',
+  },
+  {
+    rule: "require-service-operation-instrumentation",
+    plugin: "effect",
+    invalid:
       'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ draft: { read: Effect.void } });',
     valid:
       'import { Orders } from "./service"; import { Effect } from "effect"; Orders.of({ draft: { read: Effect.fn("Orders.draft.read")(() => Effect.void) } });',
