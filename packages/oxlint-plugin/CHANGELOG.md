@@ -1,5 +1,15 @@
 # @commonplaces/oxlint-plugin
 
+## 0.9.0
+
+### Minor Changes
+
+- Support Oxlint 1.90.0 alongside 1.88.0 and 1.89.0. Update the Oxlint plugin SDK
+  to 1.90.0, the native Effect checker to 0.63.0 and oxlint-tsgolint to 7.0.2005.
+  Remove Oxlint 1.87.0 support because the native Effect checker no longer ships
+  that host. Consumers on 1.87.0 must upgrade before adopting this release; native
+  Effect correctness checks remain required on every supported version.
+
 ## 0.8.0
 
 ### Minor Changes

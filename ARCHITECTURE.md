@@ -36,14 +36,15 @@ factories in production code.
 
 ## Checks
 
-Direct dependency versions were checked against npm's latest releases on
-21 October 2026 and pinned exactly. Effect and platform packages use 4.0.5;
-Oxlint and its host SDK use 1.89.0; Effect's lint tool uses 0.55.0 with the
-supported oxlint-tsgolint 7.0.2004. Bun is 1.4.3 and Oxfmt is 0.74.0.
+Dependencies remain pinned exactly. Oxlint and its host SDK were checked against
+npm on 30 October 2026 and use 1.90.0. Effect's lint tool uses 0.63.0 with
+oxlint-tsgolint 7.0.2005. TypeScript remains 7.0.2; Effect and platform packages
+use 4.0.5. Bun is 1.4.3 and Oxfmt is 0.74.0.
 Upgrading versions requires fresh archive tests with every supported host.
-Peer support is exactly Oxlint 1.87.0, 1.88.0 or 1.89.0. These are the hosts
-supported by the pinned native Effect checker. Version 0.6.0 removes
-1.86.0 rather than silently omitting native correctness checks there.
+Peer support is exactly Oxlint 1.88.0, 1.89.0 or 1.90.0. These are the hosts
+supported by the pinned native Effect checker. Version 0.9.0 removes 1.87.0,
+as 0.6.0 removed 1.86.0, rather than silently omitting native correctness checks
+on an unsupported host.
 
 Effect's native checker uses the `@effect/language-service` configuration name;
 `@effect/tsgo` supplies it, so Knip ignores that one virtual dependency name.

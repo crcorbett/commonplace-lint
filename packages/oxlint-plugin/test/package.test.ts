@@ -38,7 +38,7 @@ export const capture = Effect.gen(function* () {
   }${concurrent ? ', { concurrency: "unbounded" }' : ""});
 });`;
 
-Array.forEach(["1.87.0", "1.88.0", "1.89.0"], (version) =>
+Array.forEach(["1.88.0", "1.89.0", "1.90.0"], (version) =>
   it.effect(
     `installs the archive independently and runs all exports with Oxlint ${version}`,
     () =>
