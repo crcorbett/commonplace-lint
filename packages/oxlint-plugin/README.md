@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-108 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+109 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. Version 0.9.0 supports **Oxlint 1.88.0, 1.89.0 or 1.90.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.90.0; consuming projects may use any supported version.
@@ -340,6 +340,39 @@ package subpaths; keep your existing rule settings. The native-source rule
 recognises both `alchemy/Doppler` and the Alchemy beta.84 provider package
 `@alchemy.run/doppler`.
 
+## Static Atoms and Layers
+
+The `effect` and `strict` presets enable `strict-effect/static-atoms` and
+`strict-effect/static-layers` as errors. Declare definitions as static values;
+let the native registry and Scope own their state and resource lifetimes.
+Factories that return these definitions create unnecessary configuration APIs
+and make identity and ownership harder to follow.
+
+```ts
+// Rejected: each call creates a new definition.
+export const makeClientAtom = (runtime: Atom.AtomRuntime<never>) => runtime.atom(configure);
+
+// Accepted: one definition, with checked inputs and resource state per registry.
+export const configurationAtom = Atom.make(checkedConfiguration);
+export const clientAtom = Atom.make((get) => configure(get(configurationAtom)));
+```
+
+Supply host configuration through input Atoms and the existing registry's
+`initialValues`. Acquisition can remain deferred inside the static Atom; a static
+definition does not make the acquired client global. Static action Atoms can
+still accept operation inputs. Use a static `Atom.family` for genuinely keyed
+definitions, where Effect owns the cache, rather than an owned factory.
+
+The Atom rule follows native imports, immutable aliases, checked Atom return
+annotations and local `Atom.runtime` values or parameters annotated as
+`AtomRuntime`. It checks private functions, methods, signatures and callbacks
+to unknown helpers in source, tests and tools. Static definitions, native family
+callbacks, partial combinators, value reads and registry constructors remain
+valid, including `optimisticFn`'s native `fn` callback. Neither rule provides an
+automatic fix or factory exception options.
+This is local syntax analysis: opaque imported helpers or an unannotated runtime
+import require review; the rule does not infer cross-file return types.
+
 ## Immutable accumulation
 
 `effect` and `strict` enable `strict-effect/no-copying-accumulator` as an error.
@@ -371,7 +404,7 @@ Native loops and mutation remain forbidden by the separate strict rules.
 
 | Package subpath     | Rule prefix           | Rules |
 | ------------------- | --------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`      |    30 |
+| `/strict-effect`    | `strict-effect/`      |    32 |
 | `/effect`           | `effect/`             |     9 |
 | `/alchemy`          | `alchemy-secrets/`    |     3 |
 | `/bun`              | `bun/`                |     1 |

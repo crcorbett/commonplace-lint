@@ -1,6 +1,7 @@
 import { subprocessPipeCapture } from "./subprocess-pipe-capture.js";
 import { httpClientErrorClassification } from "./http-client-error-classification.js";
 import { noCopyingAccumulator } from "./accumulation.js";
+import { staticAtoms } from "./static-atoms.js";
 import { defineRule, eslintCompatPlugin } from "@oxlint/plugins";
 import type { Context, ESTree, Scope, Variable } from "@oxlint/plugins";
 import * as Array from "effect/Array";
@@ -3706,6 +3707,7 @@ export default eslintCompatPlugin({
     "no-native-client-replica": noNativeClientReplica,
     "website-rpc-boundary": websiteRpcBoundary,
     "static-layers": staticLayers,
+    "static-atoms": staticAtoms,
     "subprocess-pipe-capture": subprocessPipeCapture,
     "http-client-error-classification": httpClientErrorClassification,
     "no-unchecked-index": noUncheckedIndex,
