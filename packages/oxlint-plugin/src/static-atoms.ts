@@ -175,6 +175,37 @@ const isFunction = (node: ESTree.Node) =>
   node.type === "FunctionExpression" ||
   node.type === "FunctionDeclaration";
 
+const moduleDeclaration = (node: ESTree.Node): boolean =>
+  node.type === "Program" ||
+  (!isFunction(node) && Option.fromNullishOr(node.parent).pipe(Option.exists(moduleDeclaration)));
+
+const staticBinding = (context: Context, node: ESTree.Node): boolean =>
+  node.type === "Identifier" &&
+  variableInScope(context.sourceCode.getScope(node), node.name).pipe(
+    Option.exists(
+      (variable) =>
+        constant(variable).pipe(Option.exists(moduleDeclaration)) ||
+        Array.some(variable.defs, (definition) => definition.type === "ImportBinding"),
+    ),
+  );
+
+const isomorphicBuilder = (context: Context, node: ESTree.Node): boolean =>
+  valueOf(context, node).pipe(
+    Option.exists((value) => {
+      if (value.type !== "CallExpression") return false;
+      if (operation(context, value.callee, "@tanstack/react-start", "createIsomorphicFn"))
+        return true;
+      return (
+        value.callee.type === "MemberExpression" &&
+        !value.callee.computed &&
+        propertyName(value.callee.property).pipe(
+          Option.exists((name) => name === "client" || name === "server"),
+        ) &&
+        isomorphicBuilder(context, value.callee.object)
+      );
+    }),
+  );
+
 const returnsAtom = (context: Context, node: ESTree.Node): boolean => {
   if (node.type === "ReturnStatement")
     return Option.fromNullishOr(node.argument).pipe(
@@ -273,6 +304,14 @@ export const staticAtoms = defineRule({
         context.report({ node, messageId: "factory" });
     };
     const check = (node: ESTree.ArrowFunctionExpression | ESTree.Function) => {
+      // Start requires host-selection callbacks. Returning an existing module
+      // binding preserves static identity; constructing an Atom here still fails.
+      if (
+        node.parent.type === "CallExpression" &&
+        isomorphicBuilder(context, node.parent) &&
+        Option.fromNullishOr(node.body).pipe(Option.exists((body) => staticBinding(context, body)))
+      )
+        return;
       // Native family is the supported memoised owner of keyed definitions.
       // Ordinary functions, including callbacks passed to unknown helpers, are
       // not an alternative cache or configuration injection boundary.
