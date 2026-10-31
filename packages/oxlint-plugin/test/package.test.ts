@@ -111,8 +111,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [31, 9, 3, 1, 3, 15, 1, 33, 12]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 108);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 9, 3, 1, 3, 15, 1, 33, 12]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 109);
 for (const group of [general, effect, alchemy, conventions, web]) {
   for (const id of Object.keys(group.rules)) {
     if (id.startsWith("effecttsgo/")) continue;
@@ -125,6 +125,7 @@ for (const id of ["runtime-file-convention", "module-ownership", "shared-schema-
   assert.equal(effect.rules["strict-effect/" + id], undefined);
 }
 assert.equal(effect.rules["effect/require-service-operation-instrumentation"], "error");
+assert.equal(effect.rules["strict-effect/static-atoms"], "error");
 assert.equal(typescript.rules["typescript/no-unsafe-assignment"], "error");
 assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, web, typescript]);
 `,
@@ -348,6 +349,7 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
               ],
               "strict-effect/subprocess-pipe-capture": "error",
               "strict-effect/http-client-error-classification": "error",
+              "strict-effect/static-atoms": "error",
             },
           }),
         );
@@ -355,7 +357,8 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
           `${directory}/boundary-valid.ts`,
           'import "@archive/service/service";' +
             archiveCapture(true) +
-            'import { Match } from "effect"; class Unavailable {} export const map = Match.tagsExhaustive({ DecodeError: () => new Unavailable(), TransportError: () => new Unavailable(), StatusCodeError: () => new Unavailable() });',
+            'import { Match } from "effect"; class Unavailable {} export const map = Match.tagsExhaustive({ DecodeError: () => new Unavailable(), TransportError: () => new Unavailable(), StatusCodeError: () => new Unavailable() });' +
+            'import * as Atom from "effect/reactivity/Atom"; export const binding = Atom.make(0); export const resource = Atom.make((get) => get(binding)); export const keyed = Atom.family((key: string) => Atom.make(key));',
         );
         const boundaryValid = yield* command(directory, `${directory}/node_modules/.bin/oxlint`, [
           "--config",
@@ -396,6 +399,12 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
             source:
               'import { Match } from "effect"; class Integrity {} class Unavailable {} export const map = Match.tagsExhaustive({ DecodeError: () => new Integrity(), TransportError: () => new Unavailable(), StatusCodeError: () => new Unavailable() });',
             code: "strict-effect(http-client-error-classification)",
+          },
+          {
+            file: "boundary-atom-factory.ts",
+            source:
+              'import * as Atom from "effect/reactivity/Atom"; export const makePostHogBrowserAtom = (runtime: Atom.AtomRuntime<never>) => runtime.atom(configure).pipe(Atom.keepAlive);',
+            code: "strict-effect(static-atoms)",
           },
         ];
         yield* Effect.forEach(

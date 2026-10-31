@@ -46,6 +46,7 @@ export const effect: OxlintConfig = {
     "effect/no-raw-fetch": "error",
     "effect/require-service-operation-instrumentation": "error",
     "strict-effect/static-layers": "error",
+    "strict-effect/static-atoms": "error",
     "strict-effect/subprocess-pipe-capture": "error",
     "strict-effect/http-client-error-classification": "error",
     "strict-effect/no-runtime-type-assertions": "error",

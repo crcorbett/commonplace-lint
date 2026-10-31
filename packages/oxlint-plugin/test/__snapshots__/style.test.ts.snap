@@ -88,6 +88,7 @@ exports[`keeps strict separate and preserves every strict setting 1`] = `
         "strict-effect/no-unchecked-index": "error",
         "strict-effect/no-unchecked-json": "error",
         "strict-effect/no-unsafe-option-unwrap": "error",
+        "strict-effect/static-atoms": "error",
         "strict-effect/static-layers": "error",
         "strict-effect/subprocess-pipe-capture": "error",
         "strict-effect/tagged-error-name": "error",
