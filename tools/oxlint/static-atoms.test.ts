@@ -93,6 +93,10 @@ const factories = {
   "family-factory": "export const make = () => Atom.family((key: string) => Atom.make(key));",
   "fake-family":
     "const fake = { family: (callback) => callback }; export const make = fake.family(() => Atom.make(0));",
+  "host-construction":
+    'import { createIsomorphicFn } from "@tanstack/react-start"; export const selected = createIsomorphicFn().client(() => Atom.make(0));',
+  "fake-host-selector":
+    'import { createIsomorphicFn } from "./foreign"; export const selected = createIsomorphicFn().server(() => input);',
 };
 
 it.effect("rejects owned Atom factories, including the PostHog runtime-injection regression", () =>
@@ -147,6 +151,8 @@ export const shadowed = (Atom) => Atom.make(0);
 export const shadowedRuntime = (runtime) => runtime.atom(0);
 export const lexical = () => { const Atom = other; return Atom.make(0); };
 export const plain = { make: () => 1 };
+import { createIsomorphicFn as selectHost } from "@tanstack/react-start";
+export const hostAtom = selectHost().client(() => input).server(() => input);
 `,
       "apps/web/src/runtime.client.ts": `import * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
