@@ -223,6 +223,65 @@ export const recordOf = (
   );
 };
 
+const mappedService = (
+  context: Context,
+  node: ESTree.Node,
+  destructured = false,
+): Option.Option<Service> => {
+  if (node.type !== "Identifier") return Option.none();
+  return variableInScope(context.sourceCode.getScope(node), node.name).pipe(
+    Option.filter((variable) =>
+      Array.every(variable.references, (reference) => !reference.isWrite() || reference.init),
+    ),
+    Option.flatMap((variable) => Array.head(variable.defs)),
+    Option.filter((definition) => definition.type === "Parameter"),
+    Option.map((definition) => definition.node),
+    Option.filter(
+      (callback): callback is ESTree.ArrowFunctionExpression | ESTree.Function =>
+        callback.type === "ArrowFunctionExpression" || callback.type === "FunctionExpression",
+    ),
+    Option.filter((callback) =>
+      Array.head(callback.params).pipe(
+        Option.exists((parameter) =>
+          destructured
+            ? parameter.type === "ObjectPattern" &&
+              Array.some(
+                parameter.properties,
+                (property) =>
+                  property.type === "Property" &&
+                  !property.computed &&
+                  property.value.type === "Identifier" &&
+                  property.value.name === node.name,
+              )
+            : parameter.type === "Identifier" && parameter.name === node.name,
+        ),
+      ),
+    ),
+    Option.flatMap((callback) => {
+      const call = callback.parent;
+      if (
+        call?.type !== "CallExpression" ||
+        !Array.some(["map", "flatMap"], (method) =>
+          operation(context, call.callee, "effect/Effect", method),
+        )
+      )
+        return Option.none();
+      if (call.arguments.length === 2 && Option.contains(Array.get(call.arguments, 1), callback))
+        return Array.head(call.arguments).pipe(
+          Option.flatMap((value) => serviceOf(context, value)),
+        );
+      const pipe = call.parent;
+      return call.arguments.length === 1 &&
+        pipe?.type === "CallExpression" &&
+        pipe.callee.type === "MemberExpression" &&
+        Option.contains(propertyName(pipe.callee.property), "pipe") &&
+        Option.contains(Array.head(pipe.arguments), call)
+        ? serviceOf(context, pipe.callee.object)
+        : Option.none();
+    }),
+  );
+};
+
 export const borrowedService = (context: Context, node: ESTree.Node): Option.Option<Service> =>
   valueOf(context, node).pipe(
     Option.flatMap((value) =>
@@ -230,6 +289,7 @@ export const borrowedService = (context: Context, node: ESTree.Node): Option.Opt
         ? serviceOf(context, value.argument)
         : Option.none(),
     ),
+    Option.orElse(() => mappedService(context, node)),
   );
 
 export const recordsOf = (
@@ -272,6 +332,7 @@ export const borrowedOperation = (
   if (Array.contains(visited, node)) return false;
   const next = [...visited, node];
   if (node.type === "Identifier") {
+    if (Option.isSome(mappedService(context, node, true))) return true;
     return variableInScope(context.sourceCode.getScope(node), node.name).pipe(
       Option.flatMap(constant),
       Option.exists((declaration) => {

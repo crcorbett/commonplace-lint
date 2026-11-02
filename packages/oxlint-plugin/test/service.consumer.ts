@@ -62,7 +62,9 @@ export const checkServiceConsumer = Effect.fnUntraced(function* (directory: stri
   yield* fs.writeFileString(
     `${directory}/service-direct.ts`,
     contracts +
-      'export const direct = Layer.effect(Content, Effect.gen(function* () { const original = yield* ContentRead; return { read: original.read } satisfies Content["Service"]; }));',
+      'export const direct = Layer.effect(Content, Effect.gen(function* () { const original = yield* ContentRead; return { read: original.read } satisfies Content["Service"]; }));' +
+      'class Settings extends Context.Service<Settings, { origin: string }>()("Settings") {} const policy = {}; export const settings = Layer.succeed(Settings, { origin: "https://example.test", ...policy, metadata: {} });' +
+      'export const mixed = Content.of({ read: Effect.fn("Content.read")(() => Effect.void), capabilities: { enabled: policy !== undefined, links: !disabled } });',
   );
   const good = yield* success(directory, binary, [
     "--config",

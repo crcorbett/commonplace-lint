@@ -3,6 +3,54 @@ import type { Case } from "./conventions.cases";
 export const serviceCompositionCases: readonly Case[] = [
   {
     plugin: "effect",
+    rule: "require-service-operation-instrumentation",
+    invalid:
+      'import { Source, SourceRead } from "./service"; import { Effect, Layer } from "effect"; export const x = Layer.effect(Source, ordinary(SourceRead, ({ read }) => Source.of({ read })));',
+    valid:
+      'import { Source, SourceRead } from "./service"; import { Effect, Layer } from "effect"; export const x = Layer.effect(Source, SourceRead.pipe(Effect.map(({ read }) => Source.of({ read }))));',
+  },
+  {
+    plugin: "effect",
+    rule: "no-redundant-operation-wrappers",
+    invalid:
+      'import { SourceRead } from "./service"; import { Effect } from "effect"; export const x = Effect.map(SourceRead, ({ read }) => Effect.fn("Source.read")(read));',
+    valid:
+      'import { SourceRead } from "./service"; import { Effect } from "effect"; export const x = Effect.map(SourceRead, service => service.read);',
+  },
+  {
+    plugin: "effect",
+    rule: "require-service-operation-instrumentation",
+    invalid:
+      'import { Source, SourceRead } from "./service"; import { Effect, Layer } from "effect"; export const x = Layer.effect(Source, Effect.map(SourceRead, service => { service = other; return Source.of({ read: service.read }); }));',
+    valid:
+      'import { Source, SourceRead } from "./service"; import { Effect, Layer } from "effect"; export const x = Layer.effect(Source, Effect.map(SourceRead, service => Source.of({ read: service.read })));',
+  },
+  {
+    plugin: "effect",
+    rule: "require-service-operation-instrumentation",
+    invalid:
+      'import { Host } from "./service"; import { Effect } from "effect"; const capabilities = { enabled: input !== undefined, read: () => Effect.void }; export const x = Host.of({ capabilities });',
+    valid:
+      'import { Host } from "./service"; const capabilities = { enabled: input !== undefined, links: !disabled, name: "reader" }; export const x = Host.of({ capabilities });',
+  },
+  {
+    plugin: "effect",
+    rule: "require-service-operation-instrumentation",
+    invalid:
+      'import { Settings } from "./service"; import { Effect, Layer } from "effect"; const settings = { origin: configuration.origin, ...policy, read: () => Effect.void }; export const x = Layer.succeed(Settings, settings);',
+    valid:
+      'import { Settings } from "./service"; import { Layer } from "effect"; const settings = { origin: configuration.origin, ...policy, metadata: {} }; export const x = Layer.succeed(Settings, settings);',
+  },
+  {
+    plugin: "effect",
+    rule: "require-service-operation-instrumentation",
+    invalid:
+      'import { Context, Effect, Layer } from "effect"; class Content extends Context.Service<Content, { read: () => Effect.Effect<void> }>()("Content") {} export const x = Layer.succeed(Content, { ...hidden });',
+    valid:
+      'import { Context, Layer } from "effect"; class Settings extends Context.Service<Settings, { origin: string }>()("Settings") {} export const x = Layer.succeed(Settings, { origin: configuration.origin, ...policy });',
+  },
+  {
+    plugin: "effect",
     rule: "no-redundant-operation-wrappers",
     invalid:
       'import { Effect } from "effect"; const read = Effect.fn("Read.get")(() => Effect.void); export const x = Effect.fn("Read.get")(read);',

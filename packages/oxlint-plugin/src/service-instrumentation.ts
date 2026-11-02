@@ -167,6 +167,43 @@ const streamValue = (context: Context, node: ESTree.Node): boolean =>
     }),
   );
 
+const dataValue = (context: Context, node: ESTree.Node): boolean =>
+  valueOf(context, node).pipe(
+    Option.exists(
+      (value) =>
+        value.type === "Literal" ||
+        value.type === "TemplateLiteral" ||
+        (value.type === "UnaryExpression" && value.operator === "!") ||
+        (value.type === "BinaryExpression" &&
+          Array.contains(
+            ["===", "!==", "==", "!=", "<", "<=", ">", ">=", "in", "instanceof"],
+            value.operator,
+          )),
+    ),
+  );
+
+const operationSignature = (field: ESTree.TSSignature): boolean =>
+  field.type === "TSMethodSignature" ||
+  (field.type === "TSPropertySignature" &&
+    field.typeAnnotation?.typeAnnotation.type === "TSFunctionType");
+
+const operationalValue = (context: Context, node: ESTree.Node): boolean =>
+  operationValue(context, node).pipe(
+    Option.exists(
+      (value) =>
+        value.type === "ArrowFunctionExpression" ||
+        value.type === "FunctionExpression" ||
+        tracedOperation(context, node) ||
+        referenceOf(context, value).pipe(
+          Option.exists((reference) => reference.module === "effect/Effect"),
+        ) ||
+        (value.type === "CallExpression" &&
+          referenceOf(context, value.callee).pipe(
+            Option.exists((reference) => reference.module === "effect/Effect"),
+          )),
+    ),
+  );
+
 const named = (context: Context, node: ESTree.Node, name: string, method: string): boolean =>
   node.type === "CallExpression" &&
   operation(context, node.callee, "effect/Effect", method) &&
@@ -263,7 +300,7 @@ export const requireServiceOperationInstrumentation = defineRule({
     ): void => {
       if (
         Array.contains(visited, object) ||
-        (visited.length > 0 && object.properties.length === 0)
+        (!layer && visited.length > 0 && object.properties.length === 0)
       ) {
         context.report({ node: object, messageId: "unsupportedOperation" });
         return;
@@ -274,7 +311,18 @@ export const requireServiceOperationInstrumentation = defineRule({
           const source = recordOf(context, property.argument);
           if (Option.isSome(source))
             check(source.value, prefix, [], true, layer, [...visited, object]);
-          else context.report({ node: property, messageId: "unsupportedOperation" });
+          // Native Layers also carry checked configuration records. An imported
+          // data spread alone is not evidence of an operation; declared methods
+          // and visible Effect/function neighbours still require proof.
+          else if (
+            !layer ||
+            Array.some(members, operationSignature) ||
+            Array.some(
+              object.properties,
+              (field) => field.type === "Property" && operationalValue(context, field.value),
+            )
+          )
+            context.report({ node: property, messageId: "unsupportedOperation" });
           return;
         }
         const key =
@@ -284,7 +332,11 @@ export const requireServiceOperationInstrumentation = defineRule({
         Option.match(key, {
           onNone: () => context.report({ node: property, messageId: "unsupportedOperation" }),
           onSome: (member) => {
-            if (dataMember(context, members, member) || streamValue(context, property.value))
+            if (
+              dataMember(context, members, member) ||
+              dataValue(context, property.value) ||
+              streamValue(context, property.value)
+            )
               return;
             const name = `${prefix}.${member}`;
             const value = valueOf(context, property.value);
@@ -321,30 +373,11 @@ export const requireServiceOperationInstrumentation = defineRule({
                 (field.type === "TSPropertySignature" || field.type === "TSMethodSignature") &&
                 Option.contains(propertyName(field.key), member),
             );
-            const declaredOperation = Option.exists(
-              signature,
-              (field) =>
-                field.type === "TSMethodSignature" ||
-                (field.type === "TSPropertySignature" &&
-                  field.typeAnnotation?.typeAnnotation.type === "TSFunctionType"),
-            );
+            const declaredOperation = Option.exists(signature, operationSignature);
             // Bare Layers also construct data services. Only a function, native
             // Effect expression or declared operation is positive evidence there.
             const resolved = operationValue(context, property.value);
-            const operational = Option.exists(
-              resolved,
-              (operation_) =>
-                operation_.type === "ArrowFunctionExpression" ||
-                operation_.type === "FunctionExpression" ||
-                tracedOperation(context, property.value) ||
-                referenceOf(context, operation_).pipe(
-                  Option.exists((reference) => reference.module === "effect/Effect"),
-                ) ||
-                (operation_.type === "CallExpression" &&
-                  referenceOf(context, operation_.callee).pipe(
-                    Option.exists((reference) => reference.module === "effect/Effect"),
-                  )),
-            );
+            const operational = operationalValue(context, property.value);
             if (layer && !declaredOperation && !operational) return;
             if (
               !instrumented(context, property.value, name) &&
