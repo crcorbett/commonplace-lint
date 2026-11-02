@@ -1,15 +1,28 @@
 import { defineRule } from "@oxlint/plugins";
 import type { Context, ESTree } from "@oxlint/plugins";
 import { Array, Chunk, Option, Schema } from "effect";
-import { constant, operation, referenceOf, valueOf } from "./native-reference.js";
-import { childNodes, propertyName, variableInScope } from "./syntax.js";
+import { operation, referenceOf, valueOf } from "./native-reference.js";
+import { propertyName, variableInScope } from "./syntax.js";
+import {
+  borrowedOperation,
+  borrowedService,
+  contractFields,
+  operationValue,
+  recordOf,
+  recordsOf,
+  returned,
+  serviceOf,
+  serviceTypeOf,
+  tracedOperation,
+  type Service,
+} from "./service-flow.js";
 
 const Options = Schema.Struct({
   serviceNames: Schema.optionalKey(Schema.NonEmptyArray(Schema.String)),
   operationAdapters: Schema.optionalKey(
     Schema.Array(
       Schema.Struct({
-        module: Schema.NonEmptyString,
+        module: Schema.optionalKey(Schema.NonEmptyString),
         file: Schema.NonEmptyString.check(
           Schema.isPattern(/^(?!\/)(?!.*(?:\*|\\|(?:^|\/)\.\.?\/)).+\.tsx?$/u),
         ),
@@ -19,18 +32,22 @@ const Options = Schema.Struct({
     ),
   ),
 });
-interface Service {
-  readonly name: string;
-  readonly declaration: Option.Option<ESTree.Class>;
-}
-
 const adapted = (
   context: Context,
   node: ESTree.Node,
   name: string,
   adapters: NonNullable<typeof Options.Type.operationAdapters>,
+  reused = false,
 ): boolean => {
-  const value = valueOf(context, node);
+  const value = valueOf(context, node).pipe(
+    Option.flatMap((value) => {
+      if (value.type === "YieldExpression" && value.argument)
+        return valueOf(context, value.argument);
+      if (value.type === "ArrowFunctionExpression" && value.body.type !== "BlockStatement")
+        return valueOf(context, value.body);
+      return Option.some(value);
+    }),
+  );
   if (Option.isNone(value) || value.value.type !== "CallExpression") return false;
   return referenceOf(context, value.value.callee).pipe(
     Option.exists((reference) =>
@@ -54,83 +71,13 @@ const adapted = (
           : "";
         const source = (path: string) => path.replace(/\.[cm]?[jt]sx?$/u, "");
         return (
-          adapter.operation === name &&
+          (reused || adapter.operation === name) &&
           Option.exists(reference.name, (export_) => Array.contains(adapter.exports, export_)) &&
           (reference.module === adapter.module ||
             source(relative) === source(`${context.cwd}/${adapter.file}`))
         );
       }),
     ),
-  );
-};
-
-const serviceClass = (context: Context, node: ESTree.Class): boolean => {
-  const containsService = (value: ESTree.Node): boolean =>
-    (value.type === "CallExpression" &&
-      operation(context, value.callee, "effect/Context", "Service")) ||
-    Array.some(childNodes(context, value), containsService);
-  return Option.fromNullishOr(node.superClass).pipe(Option.exists(containsService));
-};
-
-// Imported names preserve the contract's canonical name even when locally aliased.
-// Local objects and shadowed parameters cannot borrow an imported service name.
-const serviceOf = (
-  context: Context,
-  node: ESTree.Node,
-  visited: readonly ESTree.Node[] = [],
-): Option.Option<Service> => {
-  if (Array.some(visited, (previous) => previous === node)) return Option.none();
-  const next = [...visited, node];
-  const imported = referenceOf(context, node).pipe(
-    Option.filter(
-      (reference) => !/^(?:(?:effect|alchemy)(?:\/|$)|@alchemy\.run\/)/u.test(reference.module),
-    ),
-    Option.flatMap((reference) => reference.name),
-    Option.filter((name) => /^[A-Z]/u.test(name)),
-    Option.map((name) => ({ name, declaration: Option.none<ESTree.Class>() })),
-  );
-  if (Option.isSome(imported)) return imported;
-  if (node.type !== "Identifier") return Option.none();
-  return variableInScope(context.sourceCode.getScope(node), node.name).pipe(
-    Option.flatMap((variable) =>
-      Array.head(variable.defs).pipe(
-        Option.flatMap((definition) => {
-          if (
-            definition.node.type === "ClassDeclaration" &&
-            serviceClass(context, definition.node)
-          ) {
-            return Option.some({ name: node.name, declaration: Option.some(definition.node) });
-          }
-          return constant(variable).pipe(
-            Option.flatMap((declaration) => Option.fromNullishOr(declaration.init)),
-            Option.flatMap((value) => serviceOf(context, value, next)),
-          );
-        }),
-      ),
-    ),
-  );
-};
-
-// Local contracts supply positive evidence for data/Stream members. No property
-// name, file suffix or service name is exempted from operation checks.
-const contractFields = (context: Context, service: Service): readonly ESTree.TSSignature[] => {
-  const fields = (node: ESTree.Node): readonly ESTree.TSSignature[] => {
-    if (
-      node.type === "CallExpression" &&
-      operation(context, node.callee, "effect/Context", "Service")
-    ) {
-      return Option.fromNullishOr(node.typeArguments).pipe(
-        Option.flatMap((arguments_) => Array.get(arguments_.params, 1)),
-        Option.filter((type) => type.type === "TSTypeLiteral"),
-        Option.map((type) => (type.type === "TSTypeLiteral" ? type.members : [])),
-        Option.getOrElse(() => []),
-      );
-    }
-    return Array.flatMap(childNodes(context, node), fields);
-  };
-  return service.declaration.pipe(
-    Option.map(fields),
-    Option.getOrElse(() => []),
   );
 };
 
@@ -178,7 +125,21 @@ const dataMember = (
         (type.type === "TSTypeReference" &&
           typeModule(context, type).pipe(
             Option.exists((module) =>
-              Array.contains(["effect/Option", "effect/Stream", "effect/Schema"], module),
+              Array.contains(
+                [
+                  "effect/Option",
+                  "effect/Stream",
+                  "effect/Schema",
+                  "effect/Ref",
+                  "effect/Queue",
+                  "effect/PubSub",
+                  "effect/Semaphore",
+                  "effect/SubscriptionRef",
+                  "effect/HashMap",
+                  "effect/HashSet",
+                ],
+                module,
+              ),
             ),
           )),
     ),
@@ -231,18 +192,7 @@ const instrumented = (
   if (node.type === "ArrowFunctionExpression" || node.type === "FunctionExpression") {
     if (node.body === null) return false;
     if (node.body.type !== "BlockStatement") return instrumented(context, node.body, name, next);
-    const returned = (statement: ESTree.Node): readonly ESTree.Node[] => {
-      if (statement.type === "ReturnStatement")
-        return Option.toArray(Option.fromNullishOr(statement.argument));
-      if (
-        statement.type === "ArrowFunctionExpression" ||
-        statement.type === "FunctionExpression" ||
-        statement.type === "FunctionDeclaration"
-      )
-        return [];
-      return Array.flatMap(childNodes(context, statement), returned);
-    };
-    const values = returned(node.body);
+    const values = returned(context, node.body);
     return (
       values.length > 0 && Array.every(values, (value) => instrumented(context, value, name, next))
     );
@@ -279,7 +229,7 @@ export const requireServiceOperationInstrumentation = defineRule({
                 exports: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
                 operation: { type: "string", minLength: 1 },
               },
-              required: ["module", "file", "exports", "operation"],
+              required: ["file", "exports", "operation"],
               additionalProperties: false,
             },
           },
@@ -303,106 +253,195 @@ export const requireServiceOperationInstrumentation = defineRule({
     const options = Schema.decodeUnknownSync(Options)(
       Option.getOrElse(Array.head(context.options), () => ({})),
     );
-    return {
-      CallExpression(node) {
-        const mock = operation(context, node.callee, "effect/Layer", "mock");
-        const constructor = mock
-          ? Array.head(node.arguments)
-          : node.callee.type === "MemberExpression" &&
-              Option.contains(propertyName(node.callee.property), "of")
-            ? Option.some(node.callee.object)
-            : Option.none<ESTree.Node>();
-        if (Option.isNone(constructor)) return;
-        const target = constructor.value;
-        const selected = options.serviceNames;
-        const explicit = target.type === "Identifier" && selected?.includes(target.name);
-        const service = explicit
-          ? Option.some({
-              name: target.type === "Identifier" ? target.name : "",
-              declaration: Option.none<ESTree.Class>(),
-            })
-          : selected
-            ? Option.none<Service>()
-            : serviceOf(context, target);
-        Option.match(service, {
-          onNone: () => {},
-          onSome: (owner) => {
-            const fields = contractFields(context, owner);
-            const argument = Array.get(node.arguments, mock ? 1 : 0).pipe(
-              Option.flatMap((value) => valueOf(context, value)),
-            );
-            if (Option.isNone(argument) || argument.value.type !== "ObjectExpression") {
-              context.report({ node, messageId: "unsupportedOperation" });
+    const check = (
+      object: ESTree.ObjectExpression,
+      prefix: string,
+      members: readonly ESTree.TSSignature[],
+      reused = false,
+      layer = false,
+      visited: readonly ESTree.Node[] = [],
+    ): void => {
+      if (
+        Array.contains(visited, object) ||
+        (visited.length > 0 && object.properties.length === 0)
+      ) {
+        context.report({ node: object, messageId: "unsupportedOperation" });
+        return;
+      }
+      Array.forEach(object.properties, (property) => {
+        if (property.type === "SpreadElement") {
+          if (Option.isSome(borrowedService(context, property.argument))) return;
+          const source = recordOf(context, property.argument);
+          if (Option.isSome(source))
+            check(source.value, prefix, [], true, layer, [...visited, object]);
+          else context.report({ node: property, messageId: "unsupportedOperation" });
+          return;
+        }
+        const key =
+          property.computed && property.key.type !== "Literal"
+            ? Option.none<string>()
+            : propertyName(property.key);
+        Option.match(key, {
+          onNone: () => context.report({ node: property, messageId: "unsupportedOperation" }),
+          onSome: (member) => {
+            if (dataMember(context, members, member) || streamValue(context, property.value))
+              return;
+            const name = `${prefix}.${member}`;
+            const value = valueOf(context, property.value);
+            if (Option.isSome(value) && value.value.type === "ObjectExpression") {
+              const nested = Array.findFirst(
+                members,
+                (field) =>
+                  field.type === "TSPropertySignature" &&
+                  Option.contains(propertyName(field.key), member),
+              ).pipe(
+                Option.flatMap((field) =>
+                  field.type === "TSPropertySignature"
+                    ? Option.fromNullishOr(field.typeAnnotation?.typeAnnotation)
+                    : Option.none(),
+                ),
+                Option.filter((type) => type.type === "TSTypeLiteral"),
+                Option.map((type) => (type.type === "TSTypeLiteral" ? type.members : [])),
+                Option.getOrElse(() => []),
+              );
+              check(value.value, name, nested, reused, layer, [...visited, object]);
               return;
             }
-            const check = (
-              object: ESTree.ObjectExpression,
-              prefix: string,
-              members: readonly ESTree.TSSignature[],
-              visited: readonly ESTree.Node[] = [],
-            ): void => {
-              if (
-                Array.contains(visited, object) ||
-                (visited.length > 0 && object.properties.length === 0)
-              ) {
-                context.report({ node: object, messageId: "unsupportedOperation" });
-                return;
-              }
-              Array.forEach(object.properties, (property) => {
-                if (property.type !== "Property") {
-                  context.report({ node: property, messageId: "unsupportedOperation" });
-                  return;
-                }
-                const key =
-                  property.computed && property.key.type !== "Literal"
-                    ? Option.none<string>()
-                    : propertyName(property.key);
-                Option.match(key, {
-                  onNone: () =>
-                    context.report({ node: property, messageId: "unsupportedOperation" }),
-                  onSome: (member) => {
-                    if (
-                      dataMember(context, members, member) ||
-                      streamValue(context, property.value)
-                    )
-                      return;
-                    const name = `${prefix}.${member}`;
-                    const value = valueOf(context, property.value);
-                    if (Option.isSome(value) && value.value.type === "ObjectExpression") {
-                      const nested = Array.findFirst(
-                        members,
-                        (field) =>
-                          field.type === "TSPropertySignature" &&
-                          Option.contains(propertyName(field.key), member),
-                      ).pipe(
-                        Option.flatMap((field) =>
-                          field.type === "TSPropertySignature"
-                            ? Option.fromNullishOr(field.typeAnnotation?.typeAnnotation)
-                            : Option.none(),
-                        ),
-                        Option.filter((type) => type.type === "TSTypeLiteral"),
-                        Option.map((type) => (type.type === "TSTypeLiteral" ? type.members : [])),
-                        Option.getOrElse(() => []),
-                      );
-                      check(value.value, name, nested, [...visited, object]);
-                      return;
-                    }
-                    if (
-                      !instrumented(context, property.value, name) &&
-                      !adapted(context, property.value, name, options.operationAdapters ?? [])
-                    )
-                      context.report({
-                        node: property,
-                        messageId: "missingInstrumentation",
-                        data: { operation: name },
-                      });
-                  },
-                });
+            if (
+              borrowedOperation(context, property.value) ||
+              (Option.isSome(value) &&
+                value.value.type === "MemberExpression" &&
+                tracedOperation(context, property.value)) ||
+              (reused && tracedOperation(context, property.value))
+            )
+              return;
+            const signature = Array.findFirst(
+              members,
+              (field) =>
+                (field.type === "TSPropertySignature" || field.type === "TSMethodSignature") &&
+                Option.contains(propertyName(field.key), member),
+            );
+            const declaredOperation = Option.exists(
+              signature,
+              (field) =>
+                field.type === "TSMethodSignature" ||
+                (field.type === "TSPropertySignature" &&
+                  field.typeAnnotation?.typeAnnotation.type === "TSFunctionType"),
+            );
+            // Bare Layers also construct data services. Only a function, native
+            // Effect expression or declared operation is positive evidence there.
+            const resolved = operationValue(context, property.value);
+            const operational = Option.exists(
+              resolved,
+              (operation_) =>
+                operation_.type === "ArrowFunctionExpression" ||
+                operation_.type === "FunctionExpression" ||
+                tracedOperation(context, property.value) ||
+                referenceOf(context, operation_).pipe(
+                  Option.exists((reference) => reference.module === "effect/Effect"),
+                ) ||
+                (operation_.type === "CallExpression" &&
+                  referenceOf(context, operation_.callee).pipe(
+                    Option.exists((reference) => reference.module === "effect/Effect"),
+                  )),
+            );
+            if (layer && !declaredOperation && !operational) return;
+            if (
+              !instrumented(context, property.value, name) &&
+              !adapted(
+                context,
+                property.value,
+                name,
+                options.operationAdapters ?? [],
+                reused ||
+                  layer ||
+                  Option.exists(resolved, (value) => value.type === "YieldExpression"),
+              )
+            )
+              context.report({
+                node: property,
+                messageId: "missingInstrumentation",
+                data: { operation: name },
               });
-            };
-            check(argument.value, owner.name, fields);
           },
         });
+      });
+    };
+    const selectedService = (target: ESTree.Node): Option.Option<Service> => {
+      const selected = options.serviceNames;
+      return selected
+        ? target.type === "Identifier" && Array.contains(selected, target.name)
+          ? Option.some({
+              name: target.name,
+              module: Option.none<string>(),
+              declaration: Option.none<ESTree.Class>(),
+            })
+          : Option.none()
+        : serviceOf(context, target);
+    };
+    const constructorObject = (object: ESTree.ObjectExpression): boolean => {
+      const parent = object.parent;
+      return (
+        parent?.type === "CallExpression" &&
+        parent.callee.type === "MemberExpression" &&
+        Option.contains(propertyName(parent.callee.property), "of")
+      );
+    };
+    const typedObject = (object: ESTree.ObjectExpression): boolean =>
+      object.parent?.type === "TSSatisfiesExpression" &&
+      Option.isSome(serviceTypeOf(context, object.parent.typeAnnotation));
+    return {
+      TSSatisfiesExpression(node) {
+        const owner = serviceTypeOf(context, node.typeAnnotation).pipe(
+          Option.filter(
+            (service) =>
+              !options.serviceNames || Array.contains(options.serviceNames, service.name),
+          ),
+        );
+        const object = recordOf(context, node.expression);
+        if (Option.isSome(owner) && Option.isSome(object))
+          check(object.value, owner.value.name, contractFields(context, owner.value));
+      },
+      CallExpression(node) {
+        const mock = operation(context, node.callee, "effect/Layer", "mock");
+        const effect = operation(context, node.callee, "effect/Layer", "effect");
+        const succeed = operation(context, node.callee, "effect/Layer", "succeed");
+        const constructor =
+          mock || effect || succeed
+            ? Array.head(node.arguments)
+            : node.callee.type === "MemberExpression" &&
+                Option.contains(propertyName(node.callee.property), "of")
+              ? Option.some(node.callee.object)
+              : Option.none<ESTree.Node>();
+        if (Option.isNone(constructor)) return;
+        const owner = selectedService(constructor.value);
+        if (Option.isNone(owner)) return;
+        const argument = Array.get(node.arguments, mock || effect || succeed ? 1 : 0);
+        if (effect && Option.isSome(argument)) {
+          Array.forEach(recordsOf(context, argument.value), (object) => {
+            if (!constructorObject(object) && !typedObject(object))
+              check(object, owner.value.name, contractFields(context, owner.value), false, true);
+          });
+          return;
+        }
+        const object = argument.pipe(
+          Option.flatMap((value) =>
+            effect || succeed ? recordOf(context, value) : valueOf(context, value),
+          ),
+        );
+        if (Option.isNone(object) || object.value.type !== "ObjectExpression") {
+          if (!effect && !succeed) context.report({ node, messageId: "unsupportedOperation" });
+          return;
+        }
+        if ((effect || succeed) && (constructorObject(object.value) || typedObject(object.value)))
+          return;
+        check(
+          object.value,
+          owner.value.name,
+          contractFields(context, owner.value),
+          false,
+          effect || succeed,
+        );
       },
     };
   },

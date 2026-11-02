@@ -4,6 +4,7 @@ import { Array, Effect, FileSystem, Match, Schema } from "effect";
 import { command, success } from "./command.js";
 import { checkStyleConsumer } from "./style.consumer.js";
 import { checkNativeConsumer } from "./native.consumer.js";
+import { checkServiceConsumer } from "./service.consumer.js";
 
 const repository = new URL("../../../", import.meta.url).pathname;
 const Archive = Schema.Struct({
@@ -111,8 +112,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 9, 3, 1, 3, 15, 1, 33, 12]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 109);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 11, 3, 1, 3, 15, 1, 33, 12]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 111);
 for (const group of [general, effect, alchemy, conventions, web]) {
   for (const id of Object.keys(group.rules)) {
     if (id.startsWith("effecttsgo/")) continue;
@@ -125,12 +126,15 @@ for (const id of ["runtime-file-convention", "module-ownership", "shared-schema-
   assert.equal(effect.rules["strict-effect/" + id], undefined);
 }
 assert.equal(effect.rules["effect/require-service-operation-instrumentation"], "error");
+assert.equal(effect.rules["effect/no-redundant-operation-wrappers"], "error");
+assert.equal(effect.rules["effect/no-service-decorators"], "error");
 assert.equal(effect.rules["strict-effect/static-atoms"], "error");
 assert.equal(typescript.rules["typescript/no-unsafe-assignment"], "error");
 assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, web, typescript]);
 `,
         );
         yield* success(directory, "node", ["inspect.mjs"]);
+        yield* checkServiceConsumer(directory);
         yield* fs.writeFileString(
           `${directory}/native-setup.config.ts`,
           'import { effect } from "@commonplaces/oxlint-plugin"; export default { extends: [effect] };',

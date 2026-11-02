@@ -49,6 +49,8 @@ exports[`keeps strict separate and preserves every strict setting 1`] = `
         "effect/no-instanceof": "error",
         "effect/no-manual-tag": "error",
         "effect/no-raw-fetch": "error",
+        "effect/no-redundant-operation-wrappers": "error",
+        "effect/no-service-decorators": "error",
         "effect/require-service-operation-instrumentation": "error",
         "effecttsgo/any-unknown-in-error-context": "error",
         "effecttsgo/class-self-mismatch": "error",

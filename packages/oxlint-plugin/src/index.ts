@@ -45,6 +45,8 @@ export const effect: OxlintConfig = {
     "effect/no-manual-tag": "error",
     "effect/no-raw-fetch": "error",
     "effect/require-service-operation-instrumentation": "error",
+    "effect/no-redundant-operation-wrappers": "error",
+    "effect/no-service-decorators": "error",
     "strict-effect/static-layers": "error",
     "strict-effect/static-atoms": "error",
     "strict-effect/subprocess-pipe-capture": "error",
