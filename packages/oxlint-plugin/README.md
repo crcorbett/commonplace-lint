@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-109 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+111 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. Version 0.10.0 supports **Oxlint 1.88.0, 1.89.0 or 1.90.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.90.0; consuming projects may use any supported version.
@@ -299,14 +299,18 @@ Use repository-relative paths with `/` separators. Runtime execution is denied
 everywhere unless `allowedFiles` grants an entry file. Service tracing is enabled
 by `effect` without a service-name inventory. It checks native local
 `Context.Service` constructors and imported capitalised service `.of` calls,
-plus supplied operations in native `Layer.mock` replacements,
+native `Layer.effect` and `Layer.succeed` records, typed `Service["Service"]`
+satisfaction records, and supplied operations in native `Layer.mock` replacements,
 preserving canonical names through named imports, namespace imports and immutable
-aliases. Shadowed names cannot borrow import identity. Every explicit operation
-requires its exact `Effect.fn("Orders.create")` or `Effect.withSpan` name.
+aliases. Shadowed names cannot borrow import identity. New operations require
+their exact `Effect.fn("Orders.create")` or `Effect.withSpan` name. Direct
+references to acquired service operations and locally proven traced records
+retain their original spans.
 Readonly resource groups are traversed recursively, including local immutable
 aliases: `Orders.session.read` requires that full canonical span. Each supplied
 leaf in `Layer.mock` is checked too. Empty resource groups, cyclic groups,
-spreads and dynamic property names fail closed; local nested contract types
+unknown spreads and dynamic property names fail closed; proven service and
+implementation spreads are checked as reuse. Local nested contract types
 continue to identify data and Stream members.
 Legacy `serviceNames` selection remains available for existing consumers.
 An empty selector is rejected.
@@ -318,8 +322,10 @@ wrap the operation or its returned Effect; an unrelated nested span is
 insufficient. The rule examines syntax, not a cross-file TypeScript type graph;
 an imported capitalised non-service `.of` API may require a distinct API shape.
 Empty partial mocks contain no supplied operation to instrument. The rule does
-not infer contracts for arbitrary Layer factories or raw `Layer.succeed` data
-objects; retain typed composition and review those boundaries.
+not read imported factory bodies or infer a whole-program type graph. Bare
+Layer records can also describe data services: declared methods, function
+expressions and native Effect values are checked without treating every data
+field as an operation. Keep ownership and types explicit at those boundaries.
 
 For a canonical operation adapter that preserves an overloaded service API,
 `operationAdapters` can name its public `module`, exact source `file`, `exports`
@@ -332,6 +338,31 @@ owner where cross-file type analysis is unavailable, not a general wrapper
 permission.
 Invalid settings stop linting. Each rule's exported `meta.schema` describes its
 accepted options; no marketplace plugin is needed to read or run them.
+
+A private traced operation or operation-producing adapter can omit `module`:
+its relative imports must resolve to the exact declared `file` and export.
+Prove the declared canonical span at that implementation. Directly reusing its
+returned operation keeps that owning span, including across capability names.
+
+### Service composition
+
+The `effect` group also enables two prevention checks:
+
+- `effect/no-redundant-operation-wrappers` rejects an extra `Effect.fn` around
+  an already traced function or an unchanged call to an acquired service method.
+  It also detects a second `withSpan` around a proven traced operation. Reuse the
+  operation directly. Argument translation, additional workflow steps and
+  timeout/retry pipelines retain their actual behaviour and are allowed.
+- `effect/no-service-decorators` rejects a visible native `Layer.effect` that
+  acquires and reconstructs the same service. Put owned analytics and metrics
+  in its normal implementation and inject their dependencies through Layers.
+  Native identity projections and distinct read/write capabilities remain valid.
+
+These checks resolve native imports, immutable aliases and lexical scopes.
+Different services with the same export name in different modules are distinct.
+There is no automatic fix: method receiver requirements and policy need review.
+They do not ban framework middleware or infer whether a configuration chain has
+enough semantic value; those architectural decisions still need review.
 
 The portable Effect checks use the existing `strict-effect/` names, and the
 Alchemy checks use `alchemy-secrets/`. Keep those names when moving from copied

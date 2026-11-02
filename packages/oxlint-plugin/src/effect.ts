@@ -1,4 +1,5 @@
 import { requireServiceOperationInstrumentation } from "./service-instrumentation.js";
+import { noRedundantOperationWrappers, noServiceDecorators } from "./service-composition.js";
 import { defineRule } from "@oxlint/plugins";
 import type { ESTree } from "@oxlint/plugins";
 import { Array, Option, Schema } from "effect";
@@ -310,5 +311,7 @@ export default {
     "no-runtime-execution-outside-main": noRuntimeExecutionOutsideMain,
     "no-unchecked-json": noUncheckedJson,
     "require-service-operation-instrumentation": requireServiceOperationInstrumentation,
+    "no-redundant-operation-wrappers": noRedundantOperationWrappers,
+    "no-service-decorators": noServiceDecorators,
   },
 };
