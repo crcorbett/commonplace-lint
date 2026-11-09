@@ -197,6 +197,17 @@ exports[`keeps strict separate and preserves every strict setting 1`] = `
         "typescript/no-unsafe-type-assertion": "error",
       },
     },
+    {
+      "jsPlugins": [
+        "@commonplaces/oxlint-plugin/strict-effect",
+        "@commonplaces/oxlint-plugin/package",
+      ],
+      "rules": {
+        "package/no-cross-app-source-paths": "error",
+        "strict-effect/http-client-ownership": "error",
+        "strict-effect/no-owner-paths-in-rules": "error",
+      },
+    },
   ],
 }
 `;

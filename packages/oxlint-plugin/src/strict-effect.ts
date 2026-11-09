@@ -3237,6 +3237,7 @@ const workerSettingsOwnership = defineRule({
 });
 
 const OwnerPathOptions = Schema.Struct({ roots: Schema.Array(Schema.String) });
+const defaultOwnerRoots: ReadonlyArray<string> = ["apps", "packages"];
 const noOwnerPathsInRules = defineRule({
   meta: {
     type: "problem",
@@ -3255,11 +3256,19 @@ const noOwnerPathsInRules = defineRule({
     },
   },
   create(context) {
-    const options = Array.head(context.options).pipe(
+    const configured = Array.head(context.options).pipe(
       Option.flatMap(Schema.decodeUnknownOption(OwnerPathOptions)),
     );
-    if (Option.isNone(options)) return {};
-    const roots = Array.join(Array.map(options.value.roots, escapePattern), "|");
+    // Without options, the strict preset checks only lint rule modules (files
+    // importing the Oxlint plugin SDK) for the conventional workspace roots.
+    const ruleModule = Array.some(
+      context.sourceCode.ast.body,
+      (statement) =>
+        statement.type === "ImportDeclaration" && statement.source.value === "@oxlint/plugins",
+    );
+    if (Option.isNone(configured) && !ruleModule) return {};
+    const options = Option.getOrElse(configured, () => ({ roots: defaultOwnerRoots }));
+    const roots = Array.join(Array.map(options.roots, escapePattern), "|");
     const pattern = new RegExp(
       `(?:^|[^\\w.-])\\/?((?:${roots})\\/[\\w./-]*\\.[cm]?[jt]sx?)(?!\\w)`,
       "u",

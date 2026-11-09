@@ -3,6 +3,8 @@ import type { ESTree } from "@oxlint/plugins";
 import { Array, Chunk, Option, Predicate } from "effect";
 import { workspaceImportBoundariesRule } from "./package/workspace-import-boundaries.js";
 import { noRedundantRuleRegistrations } from "./config.js";
+import { noDuplicatedOwnedLiterals } from "./package/owned-literals.js";
+import { noCrossAppSourcePaths } from "./package/cross-app-source-paths.js";
 
 type ImportNode =
   | ESTree.ImportDeclaration
@@ -82,5 +84,7 @@ export default {
     "no-cross-package-source-imports": noCrossPackageSourceImports,
     "workspace-import-boundaries": workspaceImportBoundariesRule,
     "no-redundant-rule-registrations": noRedundantRuleRegistrations,
+    "no-duplicated-owned-literals": noDuplicatedOwnedLiterals,
+    "no-cross-app-source-paths": noCrossAppSourcePaths,
   },
 };

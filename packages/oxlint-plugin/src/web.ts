@@ -4,6 +4,7 @@ import { Array, Option, Predicate } from "effect";
 import { propertyName } from "./syntax.js";
 import { report, rule } from "./conventions/shared.js";
 import { typographyRules } from "./web/typography.js";
+import { colourRules } from "./web/colour-literals.js";
 
 const nameOf = (node: ESTree.Node) =>
   node.type === "JSXIdentifier" ? Option.some(node.name) : propertyName(node);
@@ -37,6 +38,7 @@ export default eslintCompatPlugin({
   meta: { name: "web" },
   rules: {
     ...typographyRules,
+    ...colourRules,
     "no-context-nullish-default": rule(
       "Use canonical Schema-owned metadata and preserve absent values rather than inventing defaults.",
       (context) => ({

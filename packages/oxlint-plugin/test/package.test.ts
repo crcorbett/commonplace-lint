@@ -101,7 +101,7 @@ Array.forEach(["1.88.0", "1.89.0", "1.90.0"], (version) =>
           `${directory}/inspect.mjs`,
           `
 import assert from "node:assert/strict";
-import { general, effect, alchemy, conventions, web, typescript, strict as strictConfig } from "@commonplaces/oxlint-plugin";
+import { general, effect, alchemy, conventions, web, typescript, structure, style as styleConfig, strict as strictConfig } from "@commonplaces/oxlint-plugin";
 import conventionsPlugin from "@commonplaces/oxlint-plugin/conventions";
 import webPlugin from "@commonplaces/oxlint-plugin/web";
 import strict from "@commonplaces/oxlint-plugin/strict-effect";
@@ -112,9 +112,9 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 11, 3, 1, 3, 15, 1, 33, 12]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 111);
-for (const group of [general, effect, alchemy, conventions, web]) {
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 11, 3, 1, 5, 15, 1, 33, 13]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 114);
+for (const group of [general, effect, alchemy, conventions, web, structure]) {
   for (const id of Object.keys(group.rules)) {
     if (id.startsWith("effecttsgo/")) continue;
     const slash = id.indexOf("/");
@@ -130,7 +130,11 @@ assert.equal(effect.rules["effect/no-redundant-operation-wrappers"], "error");
 assert.equal(effect.rules["effect/no-service-decorators"], "error");
 assert.equal(effect.rules["strict-effect/static-atoms"], "error");
 assert.equal(typescript.rules["typescript/no-unsafe-assignment"], "error");
-assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, web, typescript]);
+assert.deepEqual(strictConfig.extends, [general, effect, alchemy, conventions, web, typescript, structure]);
+assert.deepEqual(structure.rules, { "strict-effect/http-client-ownership": "error", "strict-effect/no-owner-paths-in-rules": "error", "package/no-cross-app-source-paths": "error" });
+assert.equal(web.rules["web/no-colour-literals"], undefined);
+assert.equal(styleConfig.rules["web/no-colour-literals"], "error");
+assert.equal(effect.rules["strict-effect/shared-schema-owner"], undefined);
 `,
         );
         yield* success(directory, "node", ["inspect.mjs"]);
@@ -444,6 +448,18 @@ export default defineConfig({ extends: [general, effect, alchemy] });`,
             `${version}: ${file}`,
           ).toBe(true),
         );
+
+        // The doctor command ships as a package binary and loads the consumer's
+        // TypeScript configuration; this archive consumer is pinned to a file.
+        const doctor = yield* command(
+          directory,
+          `${directory}/node_modules/.bin/commonplace-lint-doctor`,
+          [],
+        );
+        expect(doctor.exitCode, doctor.stderr || doctor.stdout).toBe(1);
+        expect(doctor.stdout).toContain("error version: @commonplaces/oxlint-plugin is");
+        expect(doctor.stdout).toContain("error refresh: There is no lint script.");
+        expect(doctor.stdout).not.toContain("error config");
       }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
     120_000,
   ),

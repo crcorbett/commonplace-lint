@@ -30,4 +30,14 @@ for entry in register["documents"]:
             continue
         target = destination.split("#", 1)[0]
         assert (document.parent / target).resolve().is_file(), (entry["path"], target)
-print(f"Checked one package, {len(package['exports'])} exports and {len(paths)} documentation owners.")
+# A pending Changeset that names a rule must come with upgrade notes for it.
+upgrades = (root / "docs/upgrading.md").read_text()
+rule_names = re.compile(
+    r"`((?:strict-effect|effect|alchemy-secrets|bun|package|anti-slop|anti-slop-effect"
+    r"|effect-conventions|web)/[a-z0-9-]+)`"
+)
+changesets = [path for path in (root / ".changeset").glob("*.md") if path.name != "README.md"]
+for changeset in changesets:
+    for rule in rule_names.findall(changeset.read_text()):
+        assert f"`{rule}`" in upgrades, f"{changeset.name} names {rule}; add it to docs/upgrading.md"
+print(f"Checked one package, {len(package['exports'])} exports, {len(paths)} documentation owners and upgrade notes for {len(changesets)} Changesets.")

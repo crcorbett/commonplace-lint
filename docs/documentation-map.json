@@ -26,6 +26,10 @@
       "owner": "release procedure"
     },
     {
+      "path": "docs/upgrading.md",
+      "owner": "release upgrade notes and fixes for new rules"
+    },
+    {
       "path": ".changeset/README.md",
       "owner": "version notes"
     },

@@ -7,6 +7,7 @@ import {
   conventions,
   web,
   typescript,
+  structure,
   strict,
   style,
 } from "@commonplaces/oxlint-plugin";
@@ -37,7 +38,9 @@ it("composes the upstream presets with shared and Effect compatibility overrides
         })),
       },
     ],
+    jsPlugins: ["@commonplaces/oxlint-plugin/web"],
     rules: {
+      "web/no-colour-literals": "error",
       "require-await": "off",
       "typescript/promise-function-async": "off",
       "typescript/return-await": "off",
@@ -69,7 +72,9 @@ it("composes the upstream presets with shared and Effect compatibility overrides
 });
 
 it("keeps strict separate and preserves every strict setting", () => {
-  expect(strict).toEqual({ extends: [general, effect, alchemy, conventions, web, typescript] });
+  expect(strict).toEqual({
+    extends: [general, effect, alchemy, conventions, web, typescript, structure],
+  });
   expect(strict).toMatchSnapshot();
 });
 
@@ -81,4 +86,21 @@ it("includes all native Effect correctness checks at error level in effect and s
   expect(native).toHaveLength(26);
   Array.forEach(native, ([name]) => expect(installed).toContainEqual([name, "error"]));
   expect(strict.extends).toContain(effect);
+});
+
+it("enables the path-free ownership checks in strict and leaves owner-configured rules local", () => {
+  expect(structure).toEqual({
+    jsPlugins: ["@commonplaces/oxlint-plugin/strict-effect", "@commonplaces/oxlint-plugin/package"],
+    rules: {
+      "strict-effect/http-client-ownership": "error",
+      "strict-effect/no-owner-paths-in-rules": "error",
+      "package/no-cross-app-source-paths": "error",
+    },
+  });
+  const groups = [general, effect, alchemy, conventions, web, typescript, structure];
+  const enabled = Array.flatMap(groups, (group) => Object.keys(group.rules ?? {}));
+  // shared-schema-owner reports missing owners instead of skipping, so it stays opt-in.
+  expect(enabled).not.toContain("strict-effect/shared-schema-owner");
+  expect(enabled).not.toContain("web/no-colour-literals");
+  expect(style.rules).toHaveProperty(["web/no-colour-literals"], "error");
 });

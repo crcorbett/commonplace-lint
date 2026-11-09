@@ -4,6 +4,7 @@
 - [Architecture](../ARCHITECTURE.md): package ownership and tooling choices.
 - [Package usage](../packages/oxlint-plugin/README.md): rules, exports and options.
 - [Release runbook](runbooks/release.md): npm publication and optional GitHub archive mirrors.
+- [Upgrading](upgrading.md): rule families each release adds and how to fix code for them.
 - [Documentation map](documentation-map.json): each document's owner.
 
 Dated release observations belong under `docs/evidence/`. They record what was

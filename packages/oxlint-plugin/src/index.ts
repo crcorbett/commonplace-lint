@@ -94,7 +94,11 @@ export const web = {
   plugins: ["react", "react-perf", "jsx-a11y"],
   jsPlugins: ["@commonplaces/oxlint-plugin/web"],
   rules: Record.mapKeys(
-    Record.map(webPlugin.rules, () => "error" as const),
+    Record.map(
+      // Colour token ownership is a style choice; the style preset enables it.
+      Record.filter(webPlugin.rules, (_, name) => name !== "no-colour-literals"),
+      () => "error" as const,
+    ),
     (name) => `web/${name}`,
   ),
 } satisfies OxlintConfig;
@@ -131,9 +135,19 @@ export const alchemy = {
   },
 } satisfies OxlintConfig;
 
+/** Ownership checks that are safe without project paths; owners stay in project policy. */
+export const structure = {
+  jsPlugins: ["@commonplaces/oxlint-plugin/strict-effect", "@commonplaces/oxlint-plugin/package"],
+  rules: {
+    "strict-effect/http-client-ownership": "error",
+    "strict-effect/no-owner-paths-in-rules": "error",
+    "package/no-cross-app-source-paths": "error",
+  },
+} satisfies OxlintConfig;
+
 /** Complete strict Effect application profile; exact project owners stay local. */
 export const strict = {
-  extends: [general, effect, alchemy, conventions, web, typescript],
+  extends: [general, effect, alchemy, conventions, web, typescript, structure],
 } satisfies OxlintConfig;
 
 export { default as style } from "./style.js";

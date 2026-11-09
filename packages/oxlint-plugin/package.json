@@ -9,6 +9,9 @@
     "url": "git+https://github.com/crcorbett/commonplace-lint.git",
     "directory": "packages/oxlint-plugin"
   },
+  "bin": {
+    "commonplace-lint-doctor": "./dist/doctor/main.js"
+  },
   "files": [
     "dist",
     "README.md",
