@@ -1,6 +1,7 @@
 import { conventionCases } from "./conventions.cases";
 import { accumulationCases } from "./accumulation.cases";
 import { serviceCompositionCases } from "./service-composition.cases";
+import { effectArchitectureCases } from "./effect-architecture.cases";
 import type { Case } from "./conventions.cases";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, it } from "@effect/vitest";
@@ -25,6 +26,7 @@ const cases: readonly Case[] = [
   ...conventionCases,
   ...accumulationCases,
   ...serviceCompositionCases,
+  ...effectArchitectureCases,
   {
     rule: "require-service-operation-instrumentation",
     plugin: "effect",

@@ -32,6 +32,37 @@ green result.
   with each value, its owner module and exact owner files. Replace each copy
   with an import of the owner's value.
 
+### New Effect architecture rules
+
+All seven are enabled in `strict`; the six `strict-effect/` rules come through
+the `effect` group and `effect-conventions/no-decoded-nullish-default` through
+`conventions`. The package README describes each rule's limits.
+
+- `strict-effect/no-layer-parameters-in-service-contracts`. Reports a service
+  contract method that accepts a `Layer`, or a type parameter used as the
+  requirements of a received Effect without appearing in its result (a generic
+  `run<A, E, R>({ layer })` escape hatch). Give each caller a closed operation
+  and provide its dependencies once at composition.
+- `strict-effect/no-layer-construction-in-operations`. Reports `Layer.*`
+  constructors inside `Effect.gen`, `Effect.fn` or `Effect.fnUntraced` bodies.
+  Declare the Layer statically, supply per-call values with
+  `Effect.provideService` or as arguments.
+- `strict-effect/exhaustive-closed-union-match`. Reports `Match.orElse` after two
+  or more literal or tag cases. Add the missing cases and end with
+  `Match.exhaustive`, or use the union's own `.match`.
+- `strict-effect/no-redundant-schema-guard`. Reports `Schema.is(X)(value)` on a
+  value already narrowed by a tag or literal handler, or just decoded. Use the
+  narrowed value directly.
+- `strict-effect/no-generic-error-mapper`. Reports a generic `<E>(error: E)`
+  mapper that probes the error with `Predicate.hasProperty`, `Predicate.isTagged`
+  or `in`. Type the error union and handle it with `Effect.catchTags`.
+- `strict-effect/no-config-error-fallback`. Reports `catchTag`/`catchTags`
+  handlers that turn `ConfigError` (or a sibling `SchemaError`) into success.
+  Let invalid configuration fail startup.
+- `effect-conventions/no-decoded-nullish-default`. Reports `value.prop ?? []`,
+  `?? {}` and `?? ""` outside tests. Declare the default on the Schema with
+  `Schema.withDecodingDefaultKey` so decoded values are complete.
+
 ### Newly enabled in strict
 
 - `strict-effect/http-client-ownership`. Without options, every

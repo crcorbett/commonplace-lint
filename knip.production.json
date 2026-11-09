@@ -21,6 +21,7 @@
     "tools/oxlint/conventions.cases.ts",
     "tools/oxlint/accumulation.cases.ts",
     "tools/oxlint/service-composition.cases.ts",
+    "tools/oxlint/effect-architecture.cases.ts",
     "packages/oxlint-plugin/test/**/*.ts"
   ],
   "ignoreDependencies": ["@effect/language-service"]

@@ -112,8 +112,8 @@ import packages from "@commonplaces/oxlint-plugin/package";
 import style from "@commonplaces/oxlint-plugin/anti-slop";
 import styleEffect from "@commonplaces/oxlint-plugin/anti-slop-effect";
 const plugins = [strict, local, secrets, bun, packages, style, styleEffect, conventionsPlugin, webPlugin];
-assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [32, 11, 3, 1, 5, 15, 1, 33, 13]);
-assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 114);
+assert.deepEqual(plugins.map(plugin => Object.keys(plugin.rules).length), [38, 11, 3, 1, 5, 15, 1, 34, 13]);
+assert.equal(plugins.reduce((count, plugin) => count + Object.keys(plugin.rules).length, 0), 121);
 for (const group of [general, effect, alchemy, conventions, web, structure]) {
   for (const id of Object.keys(group.rules)) {
     if (id.startsWith("effecttsgo/")) continue;

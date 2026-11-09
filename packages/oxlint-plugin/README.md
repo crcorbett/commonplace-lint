@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-114 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+121 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. Version 0.10.0 supports **Oxlint 1.88.0, 1.89.0 or 1.90.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.90.0; consuming projects may use any supported version.
@@ -436,18 +436,113 @@ opaque helper implementations, mutable aliases or an accumulator through later
 pipe operations, and it does not measure input sizes or prove a runtime cost.
 Native loops and mutation remain forbidden by the separate strict rules.
 
+## Effect architecture checks
+
+The `effect` and `strict` presets enable six checks taken from strict Effect
+review findings. Each is local syntax analysis: Oxlint's JavaScript plugin API
+gives rules the parsed tree and scopes, not TypeScript types. The heuristics
+below say what each check can see.
+
+- `strict-effect/no-layer-parameters-in-service-contracts` reads the contract
+  type given to a native `Context.Service<Self, Contract>()` call. That can be
+  an inline type, a local interface or a local type alias, including nested
+  resource groups. An operation fails when a parameter is a `Layer.Layer`, or an
+  object or local request type with a `Layer` field. It also fails when a type
+  parameter fills the requirements slot of a received `Effect.Effect<A, E, R>`
+  but is missing from the returned type: the `run<A, E, R>({ calculation, layer })`
+  escape hatch. `Layer` and `Effect` must be imported from Effect, including
+  type-only imports. Imported contract types and `make`-style services are not read.
+- `strict-effect/no-layer-construction-in-operations` rejects native Layer
+  constructors (`succeed`, `sync`, `effect`, their `Context`/`Discard` forms and
+  `fromBuild`) inside `Effect.gen`, `Effect.fn` or `Effect.fnUntraced` bodies.
+  Module-level Layers stay valid, and so does code run once while a Layer is
+  built: `Layer.unwrap`, `Layer.effect`, `Layer.suspend`, `Layer.flatMap` and
+  similar callbacks, including a generator passed straight to them. Test files
+  (`*.test.*`, `*.spec.*` and `test/` folders) are skipped, so a test can still
+  build replacement Layers around its observations. `Layer.mock` is not
+  counted as a constructor. Plain service methods that are not Effect
+  functions are not inspected; `strict-effect/static-layers` covers factories.
+- `strict-effect/exhaustive-closed-union-match` reports `Match.orElse` at the
+  end of a `Match.value(x).pipe(...)`, `Match.type<T>().pipe(...)` or
+  `pipe(Match.value(x), ...)` pipeline when every case discriminates literals or
+  tags and there are at least two of them. Cases are `Match.when`/`whenOr` with
+  literal patterns, `Match.tag`, `Match.tags`, `Match.discriminator` and
+  `Match.discriminators`. Object patterns count only when each has a single key
+  and all share it, such as `{ _tag: "Created" }`. One literal case with a
+  fallback, guards such as `Match.when(Schema.is(X), ...)` and constant
+  references are left alone. Without types the rule cannot tell a closed literal
+  union from an open `string`: keep `orElse` with a reasoned suppression when the
+  input really is open.
+- `strict-effect/no-redundant-schema-guard` rejects `Schema.is(X)(value)` on a
+  value that is already narrowed. That means the first parameter of a `Match.tag`,
+  literal `Match.when`, `Match.tags`/`valueTags`/`discriminator(s)` handler, or of
+  an `Effect.catchTag`/`catchTags` handler. It also means a `const` initialised by
+  a `Schema.decode*` call, optionally through `yield*`. Only the bound value
+  itself is checked; a nested field such as `error.reason.cause` may still be an
+  unknown cause and stays valid. Mutable bindings and values from other sources
+  are not judged.
+- `strict-effect/no-generic-error-mapper` rejects a function with a parameter
+  typed only by its own type parameter, such as `<E>(error: E) => ...`, when its
+  body probes that parameter with `Predicate.hasProperty`, `Predicate.isTagged`
+  (either form) or the `in` operator. Concrete parameter types and other
+  helpers are left alone; `anti-slop/no-unknown-parameters` already covers `unknown`.
+- `strict-effect/no-config-error-fallback` rejects `Effect.catchTag` handlers
+  for `ConfigError`, including tag arrays and the data-first form. It also
+  rejects `Effect.catchTags` entries for `ConfigError`, and `SchemaError` beside
+  it, that return `Effect.succeed`, `succeedSome`, `succeedNone`, `sync` or
+  `Effect.void`. Local handler constants are followed; imported or opaque
+  handlers are not judged. A `SchemaError` recovery without `ConfigError` in the
+  same table is outside the rule.
+
+`conventions` and `strict` also enable `effect-conventions/no-decoded-nullish-default`.
+It rejects `value.field ?? []`, `?? {}` and `?? ""` (including optional chains
+and empty template literals) outside test files. Locals, call results and
+non-empty defaults are not reported. The rule cannot see which Schema decoded
+the value, so it uses property reads as the sign of an optional decoded field.
+`web/no-context-nullish-default` keeps its metadata scope and now suggests the
+same Schema-owned default. In `strict` both can report one `title ?? ""`.
+
+### Migrating to the architecture checks
+
+These checks make previously accepted code fail. None has an automatic fix.
+
+- Layer parameters: remove `layer`/`Layer` arguments and generic requirement
+  parameters from the contract. Give each calculation a named operation with
+  closed requirements, and build its dependencies into the service's live Layer
+  or the application root.
+- Layer construction: move `Layer.succeed(Service, value)` to a static
+  module-level Layer, or pass the request value as operation input, for example
+  with `Effect.provideService`. Rewrap startup composition in `Layer.unwrap` or
+  `Layer.effect` so it is built once.
+- Closed unions: replace `Match.orElse` with `Match.exhaustive`, adding a case
+  for every remaining variant. When the input is genuinely open, keep `orElse`
+  with a suppression comment explaining why.
+- Redundant guards: use the narrowed value's type directly, or add a
+  `Match.tag`/`Match.when` case for the variant you were testing. For decoded
+  unions, match on the discriminant rather than re-running `Schema.is`.
+- Generic mappers: type the mapper's input as the real error union and recover
+  with `Effect.catchTags` or `Match.tagsExhaustive`, mapping each tag to its
+  safe error.
+- Config fallbacks: let missing or invalid configuration fail startup, or map it
+  to one named startup error. Declare a genuinely optional setting with
+  `Config.option` or `Config.withDefault` in its Config description.
+- Nullish defaults: give the Schema field
+  `Schema.withDecodingDefaultKey(Effect.succeed([]))`, or
+  `Schema.withDecodingDefault` when `undefined` is also accepted, so decoding
+  supplies the value once. Otherwise keep absence explicit with `Option`.
+
 ## Rule exports
 
 | Package subpath     | Rule prefix           | Rules |
 | ------------------- | --------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`      |    32 |
+| `/strict-effect`    | `strict-effect/`      |    38 |
 | `/effect`           | `effect/`             |     9 |
 | `/alchemy`          | `alchemy-secrets/`    |     3 |
 | `/bun`              | `bun/`                |     1 |
 | `/package`          | `package/`            |     5 |
 | `/anti-slop`        | `anti-slop/`          |    15 |
 | `/anti-slop-effect` | `anti-slop-effect/`   |     1 |
-| `/conventions`      | `effect-conventions/` |    33 |
+| `/conventions`      | `effect-conventions/` |    34 |
 | `/web`              | `web/`                |    13 |
 
 ### Explicit codec and runtime roles
