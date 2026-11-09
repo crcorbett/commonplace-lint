@@ -65,6 +65,12 @@ export const effect: OxlintConfig = {
     "strict-effect/no-native-client-replica": "error",
     "bun/no-ambient-host-api": "error",
     "anti-slop-effect/no-service-constructor-imports": "error",
+    "strict-effect/no-layer-parameters-in-service-contracts": "error",
+    "strict-effect/no-layer-construction-in-operations": "error",
+    "strict-effect/exhaustive-closed-union-match": "error",
+    "strict-effect/no-redundant-schema-guard": "error",
+    "strict-effect/no-generic-error-mapper": "error",
+    "strict-effect/no-config-error-fallback": "error",
   },
 } satisfies OxlintConfig;
 

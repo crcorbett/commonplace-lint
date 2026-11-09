@@ -38,7 +38,7 @@ export default eslintCompatPlugin({
   rules: {
     ...typographyRules,
     "no-context-nullish-default": rule(
-      "Use canonical Schema-owned metadata and preserve absent values rather than inventing defaults.",
+      "Use canonical Schema-owned metadata and preserve absent values rather than inventing defaults. Where a default is genuine, declare it once on the Schema field with Schema.withDecodingDefaultKey.",
       (context) => ({
         LogicalExpression(node) {
           if (

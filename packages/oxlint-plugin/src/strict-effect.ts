@@ -11,6 +11,12 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Record from "effect/Record";
 import * as Schema from "effect/Schema";
+import { noLayerParametersInServiceContracts } from "./effect-architecture/no-layer-parameters-in-service-contracts.js";
+import { noLayerConstructionInOperations } from "./effect-architecture/no-layer-construction-in-operations.js";
+import { exhaustiveClosedUnionMatch } from "./effect-architecture/exhaustive-closed-union-match.js";
+import { noRedundantSchemaGuard } from "./effect-architecture/no-redundant-schema-guard.js";
+import { noGenericErrorMapper } from "./effect-architecture/no-generic-error-mapper.js";
+import { noConfigErrorFallback } from "./effect-architecture/no-config-error-fallback.js";
 
 // Resolve the nearest declaration, so a parameter or block-local name cannot
 // borrow a constant or import from an outer scope.
@@ -3732,5 +3738,11 @@ export default eslintCompatPlugin({
     "shared-schema-owner": sharedSchemaOwner,
     "checked-constant-map": checkedConstantMap,
     "no-persisted-id-normalisation": noPersistedIdNormalisation,
+    "no-layer-parameters-in-service-contracts": noLayerParametersInServiceContracts,
+    "no-layer-construction-in-operations": noLayerConstructionInOperations,
+    "exhaustive-closed-union-match": exhaustiveClosedUnionMatch,
+    "no-redundant-schema-guard": noRedundantSchemaGuard,
+    "no-generic-error-mapper": noGenericErrorMapper,
+    "no-config-error-fallback": noConfigErrorFallback,
   },
 });
