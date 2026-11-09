@@ -5,6 +5,7 @@ import { codecRules } from "./conventions/codecs.js";
 import { lifetimeRules } from "./conventions/lifetimes.js";
 import { browserRuntimeOwnership, nativeHttpClientOwnership } from "./conventions/ownership.js";
 import { boundedBuildMemo } from "./conventions/bounded-build-memo.js";
+import { noDecodedNullishDefault } from "./conventions/decoded-nullish-default.js";
 
 export default eslintCompatPlugin({
   meta: { name: "effect-conventions" },
@@ -16,5 +17,6 @@ export default eslintCompatPlugin({
     "browser-runtime-ownership": browserRuntimeOwnership,
     "native-http-client-ownership": nativeHttpClientOwnership,
     "bounded-build-memo": boundedBuildMemo,
+    "no-decoded-nullish-default": noDecodedNullishDefault,
   },
 });

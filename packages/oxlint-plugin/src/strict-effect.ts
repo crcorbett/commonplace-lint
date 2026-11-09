@@ -11,6 +11,12 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Record from "effect/Record";
 import * as Schema from "effect/Schema";
+import { noLayerParametersInServiceContracts } from "./effect-architecture/no-layer-parameters-in-service-contracts.js";
+import { noLayerConstructionInOperations } from "./effect-architecture/no-layer-construction-in-operations.js";
+import { exhaustiveClosedUnionMatch } from "./effect-architecture/exhaustive-closed-union-match.js";
+import { noRedundantSchemaGuard } from "./effect-architecture/no-redundant-schema-guard.js";
+import { noGenericErrorMapper } from "./effect-architecture/no-generic-error-mapper.js";
+import { noConfigErrorFallback } from "./effect-architecture/no-config-error-fallback.js";
 
 // Resolve the nearest declaration, so a parameter or block-local name cannot
 // borrow a constant or import from an outer scope.
@@ -3237,6 +3243,7 @@ const workerSettingsOwnership = defineRule({
 });
 
 const OwnerPathOptions = Schema.Struct({ roots: Schema.Array(Schema.String) });
+const defaultOwnerRoots: ReadonlyArray<string> = ["apps", "packages"];
 const noOwnerPathsInRules = defineRule({
   meta: {
     type: "problem",
@@ -3255,11 +3262,19 @@ const noOwnerPathsInRules = defineRule({
     },
   },
   create(context) {
-    const options = Array.head(context.options).pipe(
+    const configured = Array.head(context.options).pipe(
       Option.flatMap(Schema.decodeUnknownOption(OwnerPathOptions)),
     );
-    if (Option.isNone(options)) return {};
-    const roots = Array.join(Array.map(options.value.roots, escapePattern), "|");
+    // Without options, the strict preset checks only lint rule modules (files
+    // importing the Oxlint plugin SDK) for the conventional workspace roots.
+    const ruleModule = Array.some(
+      context.sourceCode.ast.body,
+      (statement) =>
+        statement.type === "ImportDeclaration" && statement.source.value === "@oxlint/plugins",
+    );
+    if (Option.isNone(configured) && !ruleModule) return {};
+    const options = Option.getOrElse(configured, () => ({ roots: defaultOwnerRoots }));
+    const roots = Array.join(Array.map(options.roots, escapePattern), "|");
     const pattern = new RegExp(
       `(?:^|[^\\w.-])\\/?((?:${roots})\\/[\\w./-]*\\.[cm]?[jt]sx?)(?!\\w)`,
       "u",
@@ -3732,5 +3747,11 @@ export default eslintCompatPlugin({
     "shared-schema-owner": sharedSchemaOwner,
     "checked-constant-map": checkedConstantMap,
     "no-persisted-id-normalisation": noPersistedIdNormalisation,
+    "no-layer-parameters-in-service-contracts": noLayerParametersInServiceContracts,
+    "no-layer-construction-in-operations": noLayerConstructionInOperations,
+    "exhaustive-closed-union-match": exhaustiveClosedUnionMatch,
+    "no-redundant-schema-guard": noRedundantSchemaGuard,
+    "no-generic-error-mapper": noGenericErrorMapper,
+    "no-config-error-fallback": noConfigErrorFallback,
   },
 });

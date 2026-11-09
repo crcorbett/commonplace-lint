@@ -26,7 +26,10 @@ const style: OxlintConfig = {
       })),
     },
   ],
+  jsPlugins: ["@commonplaces/oxlint-plugin/web"],
   rules: {
+    // Colour values come from the configured token or theme files.
+    "web/no-colour-literals": "error",
     // Effect owns asynchronous work. Host callbacks may return a Promise
     // directly without adding async, await or a Promise chain.
     "require-await": "off",

@@ -12,7 +12,8 @@ remains available for an explicitly authorised archive release.
 ## GitHub release from a workstation
 
 1. For later releases, add a Changeset and run `bun run version-packages` on a
-   reviewed branch. The first package version is 0.1.0. Update the version in
+   reviewed branch. A release that adds or enables rules also fills its section
+   in [the upgrade notes](../upgrading.md). The first package version is 0.1.0. Update the version in
    installation examples deliberately; keep old version notes and tags.
 2. Run `bun install --frozen-lockfile`, `bun run test` and
    `bun run verification`. Review the diff, commit, open a pull request and

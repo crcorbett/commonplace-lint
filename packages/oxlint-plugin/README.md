@@ -1,6 +1,6 @@
 # @commonplaces/oxlint-plugin
 
-111 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
+121 custom Oxlint rules for strict Effect TypeScript, Alchemy and general code
 checks. Version 0.10.0 supports **Oxlint 1.88.0, 1.89.0 or 1.90.0** and **Node 22.14 or newer**.
 Oxlint's JavaScript plugin API is experimental, so upgrade it only after running
 the rule tests. The development tools use 1.90.0; consuming projects may use any supported version.
@@ -52,11 +52,13 @@ errors. Run the latter with `oxlint --type-aware --deny-warnings .`. These group
 contain no application paths. Codec and runtime permissions remain explicit
 project facts.
 
-`strict` composes all six groups for applications that use the complete stack:
+`structure` enables ownership checks that are safe without project paths; see
+[Structure checks](#structure-checks). `strict` composes all seven groups for
+applications that use the complete stack:
 `defineConfig({ extends: [strict, projectPolicy] })`. It adds no project paths
 or source ignores. Keep exact ownership settings in the consuming project.
 
-The root exports these six groups, the optional `style` preset and the `strict` composition. Individual plugins use
+The root exports these seven groups, the optional `style` preset and the `strict` composition. Individual plugins use
 the subpaths below. For example, a JSON configuration can enable one rule:
 
 ```json
@@ -138,8 +140,9 @@ export default defineConfig({ extends: [style, strict, project] });
 
 Run `oxlint --type-aware --deny-warnings .`. `style` also works alone and is
 available as the default export of `@commonplaces/oxlint-plugin/style`.
-It never imports or extends `strict`; `strict` still contains only its original
-six groups. Adding `style` leaves strict settings unchanged. This preset includes more than formatting preferences: Ultracite
+It never imports or extends `strict`; `strict` still contains only its seven
+groups. `style` also enables `web/no-colour-literals`; see
+[Colour tokens](#colour-tokens). Adding `style` leaves strict settings unchanged. This preset includes more than formatting preferences: Ultracite
 also supplies accessibility, test and correctness checks, browser globals,
 shared ignores and test-file overrides. Its ignores can reduce which files are
 checked; keep the project's own file policy explicit.
@@ -433,19 +436,114 @@ opaque helper implementations, mutable aliases or an accumulator through later
 pipe operations, and it does not measure input sizes or prove a runtime cost.
 Native loops and mutation remain forbidden by the separate strict rules.
 
+## Effect architecture checks
+
+The `effect` and `strict` presets enable six checks taken from strict Effect
+review findings. Each is local syntax analysis: Oxlint's JavaScript plugin API
+gives rules the parsed tree and scopes, not TypeScript types. The heuristics
+below say what each check can see.
+
+- `strict-effect/no-layer-parameters-in-service-contracts` reads the contract
+  type given to a native `Context.Service<Self, Contract>()` call. That can be
+  an inline type, a local interface or a local type alias, including nested
+  resource groups. An operation fails when a parameter is a `Layer.Layer`, or an
+  object or local request type with a `Layer` field. It also fails when a type
+  parameter fills the requirements slot of a received `Effect.Effect<A, E, R>`
+  but is missing from the returned type: the `run<A, E, R>({ calculation, layer })`
+  escape hatch. `Layer` and `Effect` must be imported from Effect, including
+  type-only imports. Imported contract types and `make`-style services are not read.
+- `strict-effect/no-layer-construction-in-operations` rejects native Layer
+  constructors (`succeed`, `sync`, `effect`, their `Context`/`Discard` forms and
+  `fromBuild`) inside `Effect.gen`, `Effect.fn` or `Effect.fnUntraced` bodies.
+  Module-level Layers stay valid, and so does code run once while a Layer is
+  built: `Layer.unwrap`, `Layer.effect`, `Layer.suspend`, `Layer.flatMap` and
+  similar callbacks, including a generator passed straight to them. Test files
+  (`*.test.*`, `*.spec.*` and `test/` folders) are skipped, so a test can still
+  build replacement Layers around its observations. `Layer.mock` is not
+  counted as a constructor. Plain service methods that are not Effect
+  functions are not inspected; `strict-effect/static-layers` covers factories.
+- `strict-effect/exhaustive-closed-union-match` reports `Match.orElse` at the
+  end of a `Match.value(x).pipe(...)`, `Match.type<T>().pipe(...)` or
+  `pipe(Match.value(x), ...)` pipeline when every case discriminates literals or
+  tags and there are at least two of them. Cases are `Match.when`/`whenOr` with
+  literal patterns, `Match.tag`, `Match.tags`, `Match.discriminator` and
+  `Match.discriminators`. Object patterns count only when each has a single key
+  and all share it, such as `{ _tag: "Created" }`. One literal case with a
+  fallback, guards such as `Match.when(Schema.is(X), ...)` and constant
+  references are left alone. Without types the rule cannot tell a closed literal
+  union from an open `string`: keep `orElse` with a reasoned suppression when the
+  input really is open.
+- `strict-effect/no-redundant-schema-guard` rejects `Schema.is(X)(value)` on a
+  value that is already narrowed. That means the first parameter of a `Match.tag`,
+  literal `Match.when`, `Match.tags`/`valueTags`/`discriminator(s)` handler, or of
+  an `Effect.catchTag`/`catchTags` handler. It also means a `const` initialised by
+  a `Schema.decode*` call, optionally through `yield*`. Only the bound value
+  itself is checked; a nested field such as `error.reason.cause` may still be an
+  unknown cause and stays valid. Mutable bindings and values from other sources
+  are not judged.
+- `strict-effect/no-generic-error-mapper` rejects a function with a parameter
+  typed only by its own type parameter, such as `<E>(error: E) => ...`, when its
+  body probes that parameter with `Predicate.hasProperty`, `Predicate.isTagged`
+  (either form) or the `in` operator. Concrete parameter types and other
+  helpers are left alone; `anti-slop/no-unknown-parameters` already covers `unknown`.
+- `strict-effect/no-config-error-fallback` rejects `Effect.catchTag` handlers
+  for `ConfigError`, including tag arrays and the data-first form. It also
+  rejects `Effect.catchTags` entries for `ConfigError`, and `SchemaError` beside
+  it, that return `Effect.succeed`, `succeedSome`, `succeedNone`, `sync` or
+  `Effect.void`. Local handler constants are followed; imported or opaque
+  handlers are not judged. A `SchemaError` recovery without `ConfigError` in the
+  same table is outside the rule.
+
+`conventions` and `strict` also enable `effect-conventions/no-decoded-nullish-default`.
+It rejects `value.field ?? []`, `?? {}` and `?? ""` (including optional chains
+and empty template literals) outside test files. Locals, call results and
+non-empty defaults are not reported. The rule cannot see which Schema decoded
+the value, so it uses property reads as the sign of an optional decoded field.
+`web/no-context-nullish-default` keeps its metadata scope and now suggests the
+same Schema-owned default. In `strict` both can report one `title ?? ""`.
+
+### Migrating to the architecture checks
+
+These checks make previously accepted code fail. None has an automatic fix.
+
+- Layer parameters: remove `layer`/`Layer` arguments and generic requirement
+  parameters from the contract. Give each calculation a named operation with
+  closed requirements, and build its dependencies into the service's live Layer
+  or the application root.
+- Layer construction: move `Layer.succeed(Service, value)` to a static
+  module-level Layer, or pass the request value as operation input, for example
+  with `Effect.provideService`. Rewrap startup composition in `Layer.unwrap` or
+  `Layer.effect` so it is built once.
+- Closed unions: replace `Match.orElse` with `Match.exhaustive`, adding a case
+  for every remaining variant. When the input is genuinely open, keep `orElse`
+  with a suppression comment explaining why.
+- Redundant guards: use the narrowed value's type directly, or add a
+  `Match.tag`/`Match.when` case for the variant you were testing. For decoded
+  unions, match on the discriminant rather than re-running `Schema.is`.
+- Generic mappers: type the mapper's input as the real error union and recover
+  with `Effect.catchTags` or `Match.tagsExhaustive`, mapping each tag to its
+  safe error.
+- Config fallbacks: let missing or invalid configuration fail startup, or map it
+  to one named startup error. Declare a genuinely optional setting with
+  `Config.option` or `Config.withDefault` in its Config description.
+- Nullish defaults: give the Schema field
+  `Schema.withDecodingDefaultKey(Effect.succeed([]))`, or
+  `Schema.withDecodingDefault` when `undefined` is also accepted, so decoding
+  supplies the value once. Otherwise keep absence explicit with `Option`.
+
 ## Rule exports
 
 | Package subpath     | Rule prefix           | Rules |
 | ------------------- | --------------------- | ----: |
-| `/strict-effect`    | `strict-effect/`      |    32 |
+| `/strict-effect`    | `strict-effect/`      |    38 |
 | `/effect`           | `effect/`             |     9 |
 | `/alchemy`          | `alchemy-secrets/`    |     3 |
 | `/bun`              | `bun/`                |     1 |
-| `/package`          | `package/`            |     3 |
+| `/package`          | `package/`            |     5 |
 | `/anti-slop`        | `anti-slop/`          |    15 |
 | `/anti-slop-effect` | `anti-slop-effect/`   |     1 |
-| `/conventions`      | `effect-conventions/` |    33 |
-| `/web`              | `web/`                |    12 |
+| `/conventions`      | `effect-conventions/` |    34 |
+| `/web`              | `web/`                |    13 |
 
 ### Explicit codec and runtime roles
 
@@ -641,3 +739,123 @@ known registrations; later explicit keys can establish them again. Imported or
 spread contents still require effective-configuration review. Keep negative fixtures that
 assert the intended diagnostic once and the redundant diagnostic is absent.
 There is no automatic fix: removing a registration needs coverage evidence.
+
+## Structure checks
+
+The `structure` group, included in `strict`, enables three ownership checks
+that need no project paths:
+
+- `strict-effect/http-client-ownership` rejects Fetch HTTP client Layers and
+  request settings outside the configured owners. With no `allowedFiles`, every
+  use fails; name the exact client Layer files in the project policy.
+- `strict-effect/no-owner-paths-in-rules` keeps owner paths out of lint rule
+  code. Without options it checks only files that import `@oxlint/plugins`, for
+  `apps/` and `packages/` file paths. Explicit `roots` keep the earlier
+  behaviour and check every file in the rule's scope, so scope them with an
+  override to the rule folder.
+- `package/no-cross-app-source-paths` rejects strings in one app that point
+  into another app's `src`: `fs`/`path` arguments, `new URL(...)` paths and
+  templates such as `` `${root}/apps/api/src/worker.ts` ``. Relative strings
+  resolve from the file; others are read as repository-relative. Import sources
+  are left to `package/no-cross-package-source-imports`. `apps` takes patterns
+  where `*` matches one folder (default `["apps/*"]`); `allowedFiles` takes exact
+  reviewed exceptions. Test another app through its package export, built output
+  or a shared fixture owner.
+
+`strict-effect/shared-schema-owner` is not in any group. It reports missing
+owners rather than skipping silently, and its owners are project facts, so a
+preset setting would fail every consumer until configured. Enable it in the
+project policy with its `owners`.
+
+## Colour tokens
+
+`web/no-colour-literals` is enabled by `style` and excluded from `web`. It
+reports hex colours and functional colours (`rgb`, `rgba`, `hsl`, `hsla`, `hwb`,
+`lab`, `lch`, `oklab`, `oklch`) in TypeScript, JavaScript and JSX string literals
+and template parts. Six- and eight-digit hex values are reported anywhere they
+appear as a token; three- and four-digit values (which are also issue numbers)
+are reported when the whole string is a colour, in a colour-named property or
+JSX attribute, a tagged CSS template, a CSS declaration or a Tailwind arbitrary
+value such as `bg-[#fff]`.
+
+```ts
+"web/no-colour-literals": ["error", {
+  allowedFiles: ["packages/ui/src/tokens/**", "apps/web/src/theme.ts"],
+  allowTestFiles: false,
+}]
+```
+
+`allowedFiles` takes repository-relative globs (`**` crosses folders, `*`
+stays within one) and replaces the default `["**/*tokens*", "**/*theme*"]`.
+Unlike runtime boundaries, token ownership is a file family, so globs are
+accepted here. Oxlint does not lint `.css` files: colours in stylesheets still
+need the design and colour skill guidance, ideally with stylesheet colours
+defined once as custom properties in the token file.
+
+## Owned literal settings
+
+`package/no-duplicated-owned-literals` is opt-in. It reports a string or number
+literal equal to a value that another module owns:
+
+```ts
+"package/no-duplicated-owned-literals": ["error", {
+  ownedLiterals: [
+    {
+      value: "2026-10-04",
+      owner: "@example/infrastructure/worker-settings",
+      allowedFiles: ["packages/infrastructure/src/worker-settings.ts"],
+    },
+    {
+      value: "nodejs_compat",
+      owner: "@example/infrastructure/worker-settings",
+      allowedFiles: ["packages/infrastructure/src/worker-settings.ts"],
+    },
+  ],
+  allowTestFiles: false,
+}]
+```
+
+Only complete literals match; substitutions, longer prose, property keys,
+import sources and literal types do not. Missing options are reported. To own
+whole Worker settings by property name, such as `compatibility`, use
+`strict-effect/worker-settings-ownership` with its `properties`.
+
+## Lint doctor
+
+The package ships a `commonplace-lint-doctor` binary. Add it to the consumer's
+scripts and run it from the repository root:
+
+```json
+{ "scripts": { "lint:doctor": "commonplace-lint-doctor" } }
+```
+
+It reports, one finding per line, and exits with 1 when there is an error:
+
+- `version`: `@commonplaces/oxlint-plugin` is not declared as `"latest"`
+  (the Commonplace consumer policy), and `refresh`: no refresh such as
+  `bun update @commonplaces/oxlint-plugin --latest` runs before `oxlint` in the
+  `lint` script. Script references (`bun run`, `npm run`) and `prelint` are
+  followed.
+- `duplicate`: an enabled local plugin rule repeats a rule this package ships,
+  by the same name or by a maintained table of known copies, such as a local
+  `no-console-outside-runtime` for `effect/no-console`. Close names are
+  reported as warnings for review.
+- `path`: a file path in a rule's options, such as `allowedFiles` or owner
+  lists, does not exist.
+
+The doctor loads the first of `oxlint.config.ts`, `.mts`, `.js`, `.mjs`,
+`.oxlintrc.json` or `.oxlintrc.jsonc`, following its `extends` and overrides.
+Like Oxlint, it imports JavaScript and TypeScript configurations with Node
+(TypeScript needs Node 22.18 or newer). JSON configurations must be plain JSON.
+It reads rule names, not local rule implementations, so a copied rule with an
+unrelated name is not found.
+
+This command is the package's one host adapter exception. The package has no
+Effect runtime, so `dist/doctor/main.js` uses Node's synchronous file and
+child-process APIs and sets the exit code; the checks themselves are pure
+functions over Schema-decoded input.
+
+## Upgrading
+
+Each release lists the rule families it adds and how to fix code for them in
+[the upgrade notes](https://github.com/crcorbett/commonplace-lint/blob/main/docs/upgrading.md).

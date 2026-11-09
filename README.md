@@ -1,6 +1,6 @@
 # Commonplace Lint
 
-111 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
+121 custom Oxlint rules for TypeScript, Effect and Alchemy, packaged as
 `@commonplaces/oxlint-plugin`. Version 0.10.0 supports Oxlint **1.88.0, 1.89.0 or 1.90.0** and Node
 **22.14 or newer**. Licensed under MIT.
 
@@ -33,7 +33,7 @@ trusted publishing and provenance checks. npm installation does not depend on a 
 The earlier GitHub release v0.1.0 uses the old `@commonplace/oxlint-plugin`
 name. Its archive remains unchanged; move imports to `@commonplaces/oxlint-plugin`
 when upgrading.
-See [package usage](packages/oxlint-plugin/README.md) for all six configuration groups, the optional `style` preset, the `strict` composition, individual rules
+See [package usage](packages/oxlint-plugin/README.md) for all seven configuration groups, the optional `style` preset, the `strict` composition, individual rules
 and project settings.
 
 ## Optional style checks

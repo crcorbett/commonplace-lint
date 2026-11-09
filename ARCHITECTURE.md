@@ -5,7 +5,7 @@ Commonplace Lint is a public MIT library with one workspace:
 ```text
 root tooling and CI
   └── packages/oxlint-plugin
-       ├── src: 111 rules, six configuration groups and optional style
+       ├── src: 121 rules, seven configuration groups, optional style and the doctor
        ├── test: rule behaviour and independent archive consumers
        └── dist: generated JavaScript and declarations
 
@@ -34,6 +34,14 @@ immutable Effect collections. Native host syntax and configuration exceptions
 are explained in the package README. There are no owned services or Layer
 factories in production code.
 
+The `commonplace-lint-doctor` binary is the one host adapter exception. It runs
+outside Oxlint, so `src/doctor/main.ts` uses Node's synchronous file and child
+process APIs and sets the exit code (an exact lint allowance in the root
+configuration). Its checks in `src/doctor/checks.ts` are pure functions over
+Schema-decoded manifests and configurations; no Effect runtime is added.
+Repository checks also require upgrade notes in `docs/upgrading.md` for every
+rule a pending Changeset names.
+
 ## Checks
 
 Dependencies remain pinned exactly. Oxlint and its host SDK were checked against
@@ -61,7 +69,7 @@ in the constructor fixture keeps it valid under the latest checker.
 workspace ownership and documentation links. Turbo inputs include root config
 read by each package task. `bun run pack` cleans and builds the package and
 writes a standard npm archive. Only dist, README, package.json and LICENSE are
-included. Tests prove accepted and rejected code, exported groups and all 111
+included. Tests prove accepted and rejected code, exported groups and all 121
 registrations outside the workspace.
 
 The optional style preset removes advice that conflicts with strict Effect,
