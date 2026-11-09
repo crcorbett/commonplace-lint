@@ -62,6 +62,10 @@ the `effect` group and `effect-conventions/no-decoded-nullish-default` through
 - `effect-conventions/no-decoded-nullish-default`. Reports `value.prop ?? []`,
   `?? {}` and `?? ""` outside tests. Declare the default on the Schema with
   `Schema.withDecodingDefaultKey` so decoded values are complete.
+- `web/no-context-nullish-default` is unchanged in scope; its message now
+  suggests `Schema.withDecodingDefaultKey`. In `strict` it can report the same
+  `title ?? ""` as `effect-conventions/no-decoded-nullish-default`; one fix
+  clears both.
 
 ### Newly enabled in strict
 
