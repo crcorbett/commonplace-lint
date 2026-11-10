@@ -1,5 +1,29 @@
 # @commonplaces/oxlint-plugin
 
+## 0.12.0
+
+### Minor Changes
+
+- ebdbabd: Add six Effect architecture checks to the `effect` and `strict` presets:
+  `strict-effect/no-layer-parameters-in-service-contracts`,
+  `strict-effect/no-layer-construction-in-operations`,
+  `strict-effect/exhaustive-closed-union-match`,
+  `strict-effect/no-redundant-schema-guard`,
+  `strict-effect/no-generic-error-mapper` and
+  `strict-effect/no-config-error-fallback`. Add
+  `effect-conventions/no-decoded-nullish-default` to the `conventions` and `strict`
+  presets, rejecting `?? []`, `?? {}` and `?? ""` on property reads in favour of
+  `Schema.withDecodingDefaultKey`. `web/no-context-nullish-default` now suggests
+  the same Schema-owned default. Existing code that matches these patterns will
+  newly fail; the package README's migration notes describe each fix.
+- ebdbabd: Add `web/no-colour-literals` to the style preset, `package/no-cross-app-source-paths`
+  and the opt-in `package/no-duplicated-owned-literals`. Add a `structure` group to
+  `strict` that enables `strict-effect/http-client-ownership`,
+  `strict-effect/no-owner-paths-in-rules` (rule modules only without options) and
+  `package/no-cross-app-source-paths`. Ship the `commonplace-lint-doctor` command,
+  which reports a pinned or unrefreshed plugin, local rules that repeat preset rules
+  and missing configured paths. See docs/upgrading.md for fixes.
+
 ## 0.11.0
 
 ### Minor Changes
