@@ -843,6 +843,20 @@ It reports, one finding per line, and exits with 1 when there is an error:
 - `path`: a file path in a rule's options, such as `allowedFiles` or owner
   lists, does not exist.
 
+Some tests create files on demand, such as generated fixture hosts. List their
+globs in `ownerPaths.allowMissing` of the shared repository configuration
+`commonplace.repository.json` at the repository root, which the Commonplace
+repository validators also read, or pass a repeatable `--allow-missing <glob>`.
+The `path` check then skips missing paths that match. `**/` matches any folder
+prefix, `**` crosses folders, `*` and `?` stay within one segment, and `{a,b}`
+and `[...]` work as in shell globs. The doctor ignores the file's other sections
+and reports a `config` error when the file is not JSON or `allowMissing` is not
+a list of strings:
+
+```json
+{ "ownerPaths": { "allowMissing": ["**/.generated-*"] } }
+```
+
 The doctor loads the first of `oxlint.config.ts`, `.mts`, `.js`, `.mjs`,
 `.oxlintrc.json` or `.oxlintrc.jsonc`, following its `extends` and overrides.
 Like Oxlint, it imports JavaScript and TypeScript configurations with Node
@@ -852,7 +866,7 @@ unrelated name is not found.
 
 This command is the package's one host adapter exception. The package has no
 Effect runtime, so `dist/doctor/main.js` uses Node's synchronous file and
-child-process APIs and sets the exit code; the checks themselves are pure
+child-process APIs, reads its flags from `process.argv` and sets the exit code; the checks themselves are pure
 functions over Schema-decoded input.
 
 ## Upgrading

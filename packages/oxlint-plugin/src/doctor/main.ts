@@ -18,6 +18,7 @@ import web from "../web.js";
 import {
   Config,
   Manifest,
+  RepositoryConfig,
   configuredPaths,
   extendedFiles,
   duplicateFindings,
@@ -62,6 +63,47 @@ const manifestFindings = Option.match(
     ],
     onSome: (manifest) => [...versionFindings(manifest), ...refreshFindings(manifest)],
   },
+);
+
+// `--allow-missing <glob>` (repeatable) adds to `ownerPaths.allowMissing` in
+// the shared `commonplace.repository.json`: paths that tests create on demand.
+const flagGlobs = (args: readonly string[]): Result.Result<readonly string[], string> => {
+  const [flag, ...rest] = args;
+  if (flag === undefined) return Result.succeed([]);
+  if (flag.startsWith("--allow-missing=")) {
+    const glob = flag.slice("--allow-missing=".length);
+    return glob === ""
+      ? Result.fail("--allow-missing needs a glob.")
+      : Result.map(flagGlobs(rest), (globs) => [glob, ...globs]);
+  }
+  if (flag !== "--allow-missing") return Result.fail(`Unknown argument ${flag}.`);
+  const [glob, ...after] = rest;
+  return glob === undefined || glob.startsWith("--")
+    ? Result.fail("--allow-missing needs a glob.")
+    : Result.map(flagGlobs(after), (globs) => [glob, ...globs]);
+};
+const repositoryFile = "commonplace.repository.json";
+const flags = flagGlobs(process.argv.slice(2));
+const repositoryGlobs = Option.match(read(repositoryFile), {
+  onNone: () => Result.succeed<readonly string[]>([]),
+  onSome: (text) =>
+    Schema.decodeOption(Schema.fromJsonString(RepositoryConfig))(text).pipe(
+      Result.fromOption(
+        () =>
+          `${repositoryFile} is not valid: it must be a JSON object whose optional ownerPaths.allowMissing is a list of glob strings.`,
+      ),
+      Result.map((config): readonly string[] => config.ownerPaths?.allowMissing ?? []),
+    ),
+});
+const allowMissing = [
+  ...Result.getOrElse(repositoryGlobs, () => []),
+  ...Result.getOrElse(flags, () => []),
+];
+const allowMissingFindings = Array.flatMap([repositoryGlobs, flags], (result): readonly Finding[] =>
+  Result.match(result, {
+    onFailure: (message) => [{ severity: "error", check: "config", message }],
+    onSuccess: () => [],
+  }),
 );
 
 // Oxlint imports JavaScript and TypeScript configurations natively (TypeScript
@@ -127,15 +169,17 @@ const configFindings = Option.match(
         ],
         onSuccess: (configs) => [
           ...duplicateFindings(configs, presetRules),
-          ...missingPathFindings(configuredPaths(configs), (path) =>
-            existsSync(join(directory, path)),
+          ...missingPathFindings(
+            configuredPaths(configs),
+            (path) => existsSync(join(directory, path)),
+            allowMissing,
           ),
         ],
       }),
   },
 );
 
-const findings = [...manifestFindings, ...configFindings];
+const findings = [...manifestFindings, ...allowMissingFindings, ...configFindings];
 process.stdout.write(
   findings.length === 0
     ? "commonplace-lint-doctor: no problems found.\n"

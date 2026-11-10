@@ -310,12 +310,51 @@ export const configuredPaths = (
     (left, right) => left.rule === right.rule && left.path === right.path,
   );
 
+/**
+ * The `ownerPaths.allowMissing` globs of the shared Commonplace repository
+ * configuration (`commonplace.repository.json`). Other sections and keys belong
+ * to the repository validators and are ignored here.
+ */
+export const RepositoryConfig = Schema.Struct({
+  ownerPaths: Schema.optionalKey(
+    Schema.Struct({ allowMissing: Schema.optionalKey(Schema.Array(Schema.String)) }),
+  ),
+});
+
+// The repository validators' glob syntax: `**/` matches any folder prefix, `**`
+// crosses folders, `*` and `?` stay in one segment, `{a,b}` picks one choice and
+// `[...]` (or `[!...]`) is a character class.
+const globPart = /(\*\*\/|\*\*|\*|\?|\{|\}|,|\[!?[^\]]*\])/u;
+interface GlobState {
+  readonly source: string;
+  readonly depth: number;
+}
+const globStep = ({ source, depth }: GlobState, part: string): GlobState => {
+  if (part === "**/") return { source: `${source}(?:.*/)?`, depth };
+  if (part === "**") return { source: `${source}.*`, depth };
+  if (part === "*") return { source: `${source}[^/]*`, depth };
+  if (part === "?") return { source: `${source}[^/]`, depth };
+  if (part === "{") return { source: `${source}(?:`, depth: depth + 1 };
+  if (part === "}" && depth > 0) return { source: `${source})`, depth: depth - 1 };
+  if (part === "," && depth > 0) return { source: `${source}|`, depth };
+  if (part.startsWith("[") && part.length > 2)
+    return { source: source + part.replace(/^\[!/u, "[^"), depth };
+  return { source: source + part.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&"), depth };
+};
+// An unclosed `{` closes at the end so a typing slip cannot stop the doctor.
+const globPattern = (glob: string): RegExp => {
+  const { source, depth } = Array.reduce(glob.split(globPart), { source: "", depth: 0 }, globStep);
+  return new RegExp(`^${source}${")".repeat(depth)}$`, "u");
+};
+
+/** (c) Configured paths that do not exist, except those tests create on demand. */
 export const missingPathFindings = (
   paths: ReadonlyArray<{ readonly rule: string; readonly path: string }>,
   exists: (path: string) => boolean,
+  allowMissing: readonly string[] = [],
 ): readonly Finding[] =>
   Array.flatMap(paths, ({ rule, path }): readonly Finding[] =>
-    exists(path)
+    exists(path) || Array.some(allowMissing, (glob) => globPattern(glob).test(path))
       ? []
       : [
           {
