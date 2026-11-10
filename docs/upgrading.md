@@ -13,8 +13,8 @@ green result.
 ## Next release
 
 - `commonplace-lint-doctor` no longer reports missing paths that match an
-  `ownerPaths.allowMissing` glob in `commonplace.repository.json` or a
-  `--allow-missing <glob>` flag. Use it only for files tests create on demand.
+  `ownerPaths.allowMissing` glob in `commonplace.repository.json`. Use it only
+  for files tests create on demand.
 
 ## 0.12.0
 

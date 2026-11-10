@@ -21,10 +21,7 @@ const JsonText = Schema.fromJsonString(Schema.Json);
 
 // Writes a synthetic consumer repository and runs the built doctor command in it.
 // String contents are written as they are; other values are encoded as JSON.
-const diagnose = Effect.fnUntraced(function* (
-  files: Readonly<Record<string, Schema.Json>>,
-  args: readonly string[] = [],
-) {
+const diagnose = Effect.fnUntraced(function* (files: Readonly<Record<string, Schema.Json>>) {
   const fs = yield* FileSystem.FileSystem;
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   return yield* Effect.scoped(
@@ -44,7 +41,7 @@ const diagnose = Effect.fnUntraced(function* (
         { discard: true },
       );
       const handle = yield* spawner.spawn(
-        ChildProcess.make(node, [doctor, ...args], {
+        ChildProcess.make(node, [doctor], {
           cwd: directory,
           env: { PATH: path },
           stdout: "pipe",
@@ -190,7 +187,7 @@ describe("lint doctor", () => {
   );
 
   it.effect(
-    "skips missing paths that match ownerPaths.allowMissing or --allow-missing globs",
+    "skips missing paths that match ownerPaths.allowMissing globs",
     () =>
       Effect.gen(function* () {
         const consumer = {
@@ -223,13 +220,10 @@ describe("lint doctor", () => {
           },
         });
         expect(configured.lines, configured.stderr).toEqual([removed]);
-        const flagged = yield* diagnose(consumer, [
-          "--allow-missing",
-          "tools/oxlint/.generated-*",
-          "--allow-missing=tools/**/fixtures/*.ts",
-        ]);
-        expect(flagged.lines, flagged.stderr).toEqual([removed]);
-        const unlisted = yield* diagnose(consumer, ["--allow-missing", "tools/.generated-*"]);
+        const unlisted = yield* diagnose({
+          ...consumer,
+          "commonplace.repository.json": { ownerPaths: { allowMissing: ["tools/.generated-*"] } },
+        });
         expect(unlisted.lines).toEqual([
           "error path: strict-effect/no-imperative-collections names tools/oxlint/.generated-collection-host.ts, which does not exist.",
           "error path: strict-effect/no-imperative-collections names tools/oxlint/fixtures/sample.ts, which does not exist.",
@@ -240,7 +234,7 @@ describe("lint doctor", () => {
   );
 
   it.effect(
-    "reports a malformed repository configuration or flag",
+    "reports a malformed repository configuration",
     () =>
       Effect.gen(function* () {
         const consumer = {
@@ -262,9 +256,6 @@ describe("lint doctor", () => {
         expect(unreadable.lines).toEqual([
           expect.stringMatching(/^error config: commonplace\.repository\.json is not valid/u),
         ]);
-        const flag = yield* diagnose(consumer, ["--allow-missing"]);
-        expect(flag.exitCode).toBe(1);
-        expect(flag.lines).toEqual(["error config: --allow-missing needs a glob."]);
       }).pipe(Effect.provide(NodeServices.layer)),
     60_000,
   );

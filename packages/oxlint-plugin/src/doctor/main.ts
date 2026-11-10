@@ -65,25 +65,7 @@ const manifestFindings = Option.match(
   },
 );
 
-// `--allow-missing <glob>` (repeatable) adds to `ownerPaths.allowMissing` in
-// the shared `commonplace.repository.json`: paths that tests create on demand.
-const flagGlobs = (args: readonly string[]): Result.Result<readonly string[], string> => {
-  const [flag, ...rest] = args;
-  if (flag === undefined) return Result.succeed([]);
-  if (flag.startsWith("--allow-missing=")) {
-    const glob = flag.slice("--allow-missing=".length);
-    return glob === ""
-      ? Result.fail("--allow-missing needs a glob.")
-      : Result.map(flagGlobs(rest), (globs) => [glob, ...globs]);
-  }
-  if (flag !== "--allow-missing") return Result.fail(`Unknown argument ${flag}.`);
-  const [glob, ...after] = rest;
-  return glob === undefined || glob.startsWith("--")
-    ? Result.fail("--allow-missing needs a glob.")
-    : Result.map(flagGlobs(after), (globs) => [glob, ...globs]);
-};
 const repositoryFile = "commonplace.repository.json";
-const flags = flagGlobs(process.argv.slice(2));
 const repositoryGlobs = Option.match(read(repositoryFile), {
   onNone: () => Result.succeed<readonly string[]>([]),
   onSome: (text) =>
@@ -95,16 +77,12 @@ const repositoryGlobs = Option.match(read(repositoryFile), {
       Result.map((config): readonly string[] => config.ownerPaths?.allowMissing ?? []),
     ),
 });
-const allowMissing = [
-  ...Result.getOrElse(repositoryGlobs, () => []),
-  ...Result.getOrElse(flags, () => []),
-];
-const allowMissingFindings = Array.flatMap([repositoryGlobs, flags], (result): readonly Finding[] =>
-  Result.match(result, {
-    onFailure: (message) => [{ severity: "error", check: "config", message }],
-    onSuccess: () => [],
-  }),
-);
+// Paths that tests create on demand come from the shared repository config.
+const allowMissing = Result.getOrElse(repositoryGlobs, (): readonly string[] => []);
+const allowMissingFindings = Result.match(repositoryGlobs, {
+  onFailure: (message): readonly Finding[] => [{ severity: "error", check: "config", message }],
+  onSuccess: (): readonly Finding[] => [],
+});
 
 // Oxlint imports JavaScript and TypeScript configurations natively (TypeScript
 // needs Node 22.18 or newer); the doctor does the same in a child process and

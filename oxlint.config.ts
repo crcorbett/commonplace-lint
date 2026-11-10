@@ -23,12 +23,6 @@ export default defineConfig({
   },
   overrides: [
     {
-      // The doctor command's host adapter reads its `--allow-missing` flags from
-      // process.argv; it has no Effect runtime to decode command input through.
-      files: ["packages/oxlint-plugin/src/doctor/main.ts"],
-      rules: { "effect/no-ambient-process": "off" },
-    },
-    {
       // These two migrated rule collections remain whole to preserve their shared syntax analysis.
       files: [
         "packages/oxlint-plugin/src/strict-effect.ts",
