@@ -185,4 +185,78 @@ describe("lint doctor", () => {
       }).pipe(Effect.provide(NodeServices.layer)),
     60_000,
   );
+
+  it.effect(
+    "skips missing paths that match ownerPaths.allowMissing globs",
+    () =>
+      Effect.gen(function* () {
+        const consumer = {
+          "package.json": manifest("latest", refreshed),
+          ".oxlintrc.json": {
+            rules: {
+              "strict-effect/no-imperative-collections": [
+                "error",
+                {
+                  allowedFiles: [
+                    "tools/oxlint/.generated-collection-host.ts",
+                    "tools/oxlint/fixtures/sample.ts",
+                    "src/removed-adapter.ts",
+                  ],
+                },
+              ],
+            },
+          },
+        };
+        const removed =
+          "error path: strict-effect/no-imperative-collections names src/removed-adapter.ts, which does not exist.";
+        const configured = yield* diagnose({
+          ...consumer,
+          "commonplace.repository.json": {
+            responsibilities: { "knip-config": "knip.json" },
+            ownerPaths: {
+              sources: ["tools/oxlint/package-roles.ts"],
+              allowMissing: ["**/.generated-*", "tools/oxlint/fixtures/{sample,other}.ts"],
+            },
+          },
+        });
+        expect(configured.lines, configured.stderr).toEqual([removed]);
+        const unlisted = yield* diagnose({
+          ...consumer,
+          "commonplace.repository.json": { ownerPaths: { allowMissing: ["tools/.generated-*"] } },
+        });
+        expect(unlisted.lines).toEqual([
+          "error path: strict-effect/no-imperative-collections names tools/oxlint/.generated-collection-host.ts, which does not exist.",
+          "error path: strict-effect/no-imperative-collections names tools/oxlint/fixtures/sample.ts, which does not exist.",
+          removed,
+        ]);
+      }).pipe(Effect.provide(NodeServices.layer)),
+    60_000,
+  );
+
+  it.effect(
+    "reports a malformed repository configuration",
+    () =>
+      Effect.gen(function* () {
+        const consumer = {
+          "package.json": manifest("latest", refreshed),
+          ".oxlintrc.json": { rules: {} },
+        };
+        const malformed = yield* diagnose({
+          ...consumer,
+          "commonplace.repository.json": { ownerPaths: { allowMissing: "**/.generated-*" } },
+        });
+        expect(malformed.exitCode).toBe(1);
+        expect(malformed.lines).toEqual([
+          "error config: commonplace.repository.json is not valid: it must be a JSON object whose optional ownerPaths.allowMissing is a list of glob strings.",
+        ]);
+        const unreadable = yield* diagnose({
+          ...consumer,
+          "commonplace.repository.json": "{ ownerPaths: [",
+        });
+        expect(unreadable.lines).toEqual([
+          expect.stringMatching(/^error config: commonplace\.repository\.json is not valid/u),
+        ]);
+      }).pipe(Effect.provide(NodeServices.layer)),
+    60_000,
+  );
 });

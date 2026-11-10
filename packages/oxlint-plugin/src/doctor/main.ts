@@ -18,6 +18,7 @@ import web from "../web.js";
 import {
   Config,
   Manifest,
+  RepositoryConfig,
   configuredPaths,
   extendedFiles,
   duplicateFindings,
@@ -63,6 +64,25 @@ const manifestFindings = Option.match(
     onSome: (manifest) => [...versionFindings(manifest), ...refreshFindings(manifest)],
   },
 );
+
+const repositoryFile = "commonplace.repository.json";
+const repositoryGlobs = Option.match(read(repositoryFile), {
+  onNone: () => Result.succeed<readonly string[]>([]),
+  onSome: (text) =>
+    Schema.decodeOption(Schema.fromJsonString(RepositoryConfig))(text).pipe(
+      Result.fromOption(
+        () =>
+          `${repositoryFile} is not valid: it must be a JSON object whose optional ownerPaths.allowMissing is a list of glob strings.`,
+      ),
+      Result.map((config): readonly string[] => config.ownerPaths?.allowMissing ?? []),
+    ),
+});
+// Paths that tests create on demand come from the shared repository config.
+const allowMissing = Result.getOrElse(repositoryGlobs, (): readonly string[] => []);
+const allowMissingFindings = Result.match(repositoryGlobs, {
+  onFailure: (message): readonly Finding[] => [{ severity: "error", check: "config", message }],
+  onSuccess: (): readonly Finding[] => [],
+});
 
 // Oxlint imports JavaScript and TypeScript configurations natively (TypeScript
 // needs Node 22.18 or newer); the doctor does the same in a child process and
@@ -127,15 +147,17 @@ const configFindings = Option.match(
         ],
         onSuccess: (configs) => [
           ...duplicateFindings(configs, presetRules),
-          ...missingPathFindings(configuredPaths(configs), (path) =>
-            existsSync(join(directory, path)),
+          ...missingPathFindings(
+            configuredPaths(configs),
+            (path) => existsSync(join(directory, path)),
+            allowMissing,
           ),
         ],
       }),
   },
 );
 
-const findings = [...manifestFindings, ...configFindings];
+const findings = [...manifestFindings, ...allowMissingFindings, ...configFindings];
 process.stdout.write(
   findings.length === 0
     ? "commonplace-lint-doctor: no problems found.\n"

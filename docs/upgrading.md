@@ -10,6 +10,12 @@ checked version and the new one, then run the [doctor](../packages/oxlint-plugin
 and their normal lint command. Fix the code; do not disable a new rule to get a
 green result.
 
+## Next release
+
+- `commonplace-lint-doctor` no longer reports missing paths that match an
+  `ownerPaths.allowMissing` glob in `commonplace.repository.json`. Use it only
+  for files tests create on demand.
+
 ## 0.12.0
 
 ### New rules
