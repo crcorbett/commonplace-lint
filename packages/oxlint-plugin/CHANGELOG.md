@@ -1,5 +1,11 @@
 # @commonplaces/oxlint-plugin
 
+## 0.12.1
+
+### Patch Changes
+
+- ea18bcc: `commonplace-lint-doctor` skips missing-path reports for files tests create on demand, named by `ownerPaths.allowMissing` globs in `commonplace.repository.json`.
+
 ## 0.12.0
 
 ### Minor Changes
